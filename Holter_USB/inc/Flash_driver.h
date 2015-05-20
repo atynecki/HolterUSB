@@ -1,5 +1,5 @@
-#ifndef ADS1x9x_NAND_LLD_H_
-#define ADS1x9x_NAND_LLD_H_
+#ifndef FLASH_DRIVER_H_
+#define FLASH_DRIVER_H_
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -145,4 +145,4 @@ void send_data_to_flash(unsigned char *data_frame);
 short read_data_from_flash(unsigned char *data_frame);
 void erase_flash();
 
-#endif /*ADS1x9x_NAND_LLD_H_*/
+#endif

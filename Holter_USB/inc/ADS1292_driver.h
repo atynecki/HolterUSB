@@ -40,7 +40,7 @@ void Read_Data (void);
 /** API FUNCTIONS */
 void ADS1x9x_Reg_Init(unsigned char* reg_tab);
 void ADS1x9x_Read_All_Regs(unsigned char ADS1x9xeg_buf[]);
-bool ADS1x9x_Init(void);
+short ADS1x9x_Init(void);
 void enable_ADS1x9x_Conversion (void);
 void disable_ADS1x9x_Conversion (void);
 

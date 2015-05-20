@@ -314,22 +314,22 @@ bool compare_address()
 
 short flash_init()
 {
-        unsigned char result;
+    unsigned char result;
 	Flash_MT298G08AAAWP_init();
         
-        /* check communication */
-        unsigned char ucReadID [4];
-        P7OUT &= ~(enum PORT7_FALSH_CONTROL)FLASH_CE;
-	
-        WRITE_NAND_CLE(NAND_CMD_READ_ID);		
+	/* check communication */
+	unsigned char ucReadID [4];
+	P7OUT &= ~(enum PORT7_FALSH_CONTROL)FLASH_CE;
+
+	WRITE_NAND_CLE(NAND_CMD_READ_ID);
 	WRITE_NAND_ALE(0x00);	
 	READ_NAND_ARRAY(&ucReadID, 4);
 	P7OUT |= (enum PORT7_FALSH_CONTROL)FLASH_CE;
         
-        if ((ucReadID [0] == 0x2C) && (ucReadID [1] == 0x01))
-          result  = NAND_IO_RC_PASS;
-        else
-          result  = NAND_IO_RC_FAIL;
+	if ((ucReadID [0] == 0x2C) && (ucReadID [1] == 0x01))
+	  result  = NAND_IO_RC_PASS;
+	else
+	  result  = NAND_IO_RC_FAIL;
 	
 	return result;
 }
@@ -411,8 +411,7 @@ static short Flash_ProgramPage( struct FlashAddress write_address, unsigned shor
 
 void send_data_to_flash(unsigned char *data_frame)
 {		
-        short rc;
-        Flash_ProgramPage(Write_Flash_Address,8,data_frame);
+	Flash_ProgramPage(Write_Flash_Address,8,data_frame);
 	Write_Flash_Address.usColNum +=8;
 	
 	if (Write_Flash_Address.usColNum == PAGE_SIZE)

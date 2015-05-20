@@ -1,13 +1,12 @@
 /* Interrupt handlers source file */
 
-#include "it_handlers.h"
+#include "app_service.h"
 
 uint8_t run_key_state = 0;
-uint8_t sd_key_state = 0;
-unsigned char spi_rx_count=0, spi_rx_exp_count=0; 
+uint8_t stream_key_state = 0;
+unsigned char spi_rx_count=0;
 unsigned char data_check[3] = {0};
 unsigned char spi_rx_buf[6] = {0};
-SD_RESULT sd_card_res;
 
 #pragma vector=PORT1_VECTOR
 __interrupt void Port_1(void)
@@ -22,6 +21,7 @@ __interrupt void Port_1(void)
         clear_write_address();
         erase_flash();
       
+        create_header_frame();
         GPIO_setOutputHighOnPin(GPIO_PORT_P5,GPIO_PIN0);
         enable_ADS1x9x_Conversion ();
       }
@@ -51,22 +51,13 @@ __interrupt void Port_1(void)
    
    else if (GPIO_getInterruptStatus(GPIO_PORT_P1,GPIO_PIN6)) {
      GPIO_clearInterruptFlag(GPIO_PORT_P1, GPIO_PIN6);
-     if (sd_key_state == 0){
-        sd_key_state = 1;
-        sd_card_res = sd_card_init_file();
-        if (sd_card_res == SD_OK){
-          GPIO_setOutputHighOnPin(GPIO_PORT_P5,GPIO_PIN1);
-          clear_read_address();
-          app_get_flags()->sd_data_send = true;
-        }
+     if (stream_key_state == 0){
+    	 	 GPIO_setOutputHighOnPin(GPIO_PORT_P5,GPIO_PIN1);
+    	 	 //TODO add live stream
      }
      else {
-        sd_key_state = 0;
-        sd_card_res = sd_card_close_file();
-        if (sd_card_res == SD_OK){
-          GPIO_setOutputLowOnPin (GPIO_PORT_P5,GPIO_PIN1);
-          app_get_flags()->sd_data_send = false;
-        }
+        stream_key_state = 0;
+        GPIO_setOutputLowOnPin (GPIO_PORT_P5,GPIO_PIN1);
      }
    }
 }

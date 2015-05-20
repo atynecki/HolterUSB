@@ -1,10 +1,14 @@
-/** app_config header */
 
 #ifndef __APP_CONFIG_H__
 #define __APP_CONFIG_H__
 
+/** app_config header */
+
 #include <stdint.h>
+#include <stdlib.h>
 #include <stdbool.h>
+#include "driverlib.h"
+#include "delay.h"
 
 #define ELECTRODE
 
@@ -24,13 +28,6 @@
   #define STATUS_MSB_BIT      0xC4
 #endif
 
-typedef struct {
-  bool ADS_ready;
-  bool RTC_ready;
-  bool hardware_ready;
-  bool data_ready;
-  bool sd_data_send;
-} general_flags_t, *general_flags_p;
-
-
+#define DATA_FRAME_LENGTH			8
+#define DATA_SEND_FRAME_LENGTH		10
 #endif

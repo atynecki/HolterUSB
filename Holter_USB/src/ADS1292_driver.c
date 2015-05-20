@@ -460,7 +460,7 @@ static bool compare_reg_value()
 /**********************************************************************************************************
 * ADS1x9x_Init          				                  		
 ***********************************************************************************************************/
-bool ADS1x9x_Init(void)
+short ADS1x9x_Init(void)
 {
    volatile unsigned short Init_i, j;
    bool error = false;
@@ -484,7 +484,7 @@ bool ADS1x9x_Init(void)
    
    error = ADS1x9x_SPI_Check_Communication();
    if(error == false)
-     return error;
+     return 1;
    
    ADS1x9x_Reg_Init(ADS_register_settings);
    for (j = 0; j < DELAY_COUNT; j++){
@@ -510,7 +510,7 @@ bool ADS1x9x_Init(void)
    Init_ADS1x9x_DRDY_Interrupt();
    Disable_ADS1x9x_DRDY_Interrupt();
    
-   return true;
+   return 0;
 }
 
 /**********************************************************************************************************

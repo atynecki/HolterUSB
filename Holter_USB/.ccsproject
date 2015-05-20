@@ -9,4 +9,6 @@
 	<rts value="libc.a"/>
 	<createSlaveProjects value=""/>
 	<templateProperties value="id=C0_SimpleSend.projectspec.C0_SimpleSend,"/>
+	<connection value="common/targetdb/connections/TIMSP430-USB.xml"/>
+	<isTargetManual value="false"/>
 </projectOptions>
