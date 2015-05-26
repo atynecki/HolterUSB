@@ -18,7 +18,6 @@ __interrupt void Port_1(void)
       if (run_key_state == 0){
         run_key_state = 1;
        
-        //erase_flash();
         app_get_flags()->stream_enable = true;
       
         GPIO_setOutputHighOnPin(GPIO_PORT_P5,GPIO_PIN0);
