@@ -36,8 +36,18 @@ void create_header_frame ()
 	data_frame[5] = time_data.Minutes;
 	data_frame[6] = time_data.Seconds;
 
-	send_data_to_flash(data_frame);
+	if(app_get_flags()->backup_enable == true)
+		send_data_to_flash(data_frame);
 }
+
+static void create_send_frame (uint8_t * frame)
+{
+	int i = 3;
+	for(i = 3; i<DATA_SEND_FRAME_LENGTH; i++){
+		send_frame[i] = frame[i-3];
+	 }
+}
+
 void collect_data(unsigned char *data)
 {
     time_data = RTC_A_getCalendarTime(RTC_A_BASE);
@@ -53,7 +63,12 @@ void collect_data(unsigned char *data)
     data_frame[5] = time_data.Minutes;
     data_frame[6] = time_data.Seconds;
     
-    send_data_to_flash(data_frame);
+    if(app_get_flags()->backup_enable == true)
+    	send_data_to_flash(data_frame);
+    else if (app_get_flags()->stream_enable == true){
+    	create_send_frame(data_frame);
+    	cdcSendDataInBackground(send_frame, 10, CDC0_INTFNUM, 1000);
+    }
 }
 
 void visualization(void)
@@ -77,15 +92,12 @@ void visualization(void)
 transfer_result transfer_data ()
 {
     short res;
-    int i = 3;
     
     res = read_data_from_flash(read_frame);
     if(res!=0)
       return TRANSFER_READ_ERROR;
 
-    for(i = 3; i<DATA_SEND_FRAME_LENGTH; i++){
-    	send_frame[i] = read_frame[i-3];
-    }
+    create_send_frame(read_frame);
 
     res = cdcSendDataInBackground(send_frame, 10, CDC0_INTFNUM, 1000);
 	if(res!=0)

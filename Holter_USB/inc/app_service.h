@@ -28,6 +28,7 @@ typedef struct{
 typedef struct {
   bool data_transfer;
   bool stream_enable;
+  bool backup_enable;
   uint8_t device_error;
   uint8_t transfer_error;
 } general_flags_t, *general_flags_p;

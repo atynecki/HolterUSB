@@ -9,7 +9,7 @@ void main ()
     PMM_setVCore(PMM_CORE_LEVEL_2);
 
     //TODO sprawdziæ która opacja dzia³a
-    initClocks(8000000);   // Config clocks. MCLK=SMCLK=FLL=8MHz; ACLK=REFO=32kHz
+    initClocks(24000000);   // Config clocks. MCLK=SMCLK=FLL=24MHz; ACLK=REFO=32kHz
    // CLOCK_init();
 
     peripherial_init ();
@@ -26,8 +26,6 @@ void main ()
     			app_get_flags()->transfer_error = transfer_err;
     			app_get_flags()->data_transfer = false;
     		}
-
     	}
-      //cdcSendDataInBackground(timeStr, 9, CDC0_INTFNUM, 1000))
     }
 }

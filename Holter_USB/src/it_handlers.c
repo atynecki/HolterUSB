@@ -3,7 +3,7 @@
 #include "app_service.h"
 
 uint8_t run_key_state = 0;
-uint8_t stream_key_state = 0;
+uint8_t backup_key_state = 0;
 unsigned char spi_rx_count=0;
 unsigned char data_check[3] = {0};
 unsigned char spi_rx_buf[6] = {0};
@@ -18,10 +18,9 @@ __interrupt void Port_1(void)
       if (run_key_state == 0){
         run_key_state = 1;
        
-        clear_write_address();
-        erase_flash();
+        //erase_flash();
+        app_get_flags()->stream_enable = true;
       
-        create_header_frame();
         GPIO_setOutputHighOnPin(GPIO_PORT_P5,GPIO_PIN0);
         enable_ADS1x9x_Conversion ();
       }
@@ -51,13 +50,19 @@ __interrupt void Port_1(void)
    
    else if (GPIO_getInterruptStatus(GPIO_PORT_P1,GPIO_PIN6)) {
      GPIO_clearInterruptFlag(GPIO_PORT_P1, GPIO_PIN6);
-     if (stream_key_state == 0){
-    	 	 GPIO_setOutputHighOnPin(GPIO_PORT_P5,GPIO_PIN1);
-    	 	 //TODO add live stream
+     if (backup_key_state == 0){
+    	backup_key_state = 1;
+
+    	clear_write_address();
+    	create_header_frame();
+
+		GPIO_setOutputHighOnPin(GPIO_PORT_P5,GPIO_PIN1);
+		app_get_flags()->backup_enable = true;
      }
      else {
-        stream_key_state = 0;
+        backup_key_state = 0;
         GPIO_setOutputLowOnPin (GPIO_PORT_P5,GPIO_PIN1);
+        app_get_flags()->backup_enable = false;
      }
    }
 }
