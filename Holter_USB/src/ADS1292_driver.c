@@ -15,52 +15,52 @@ unsigned char 	ADS_default_register_settings[12] = {
 	ADS1x9x_REG_ID_VALUE,
    	//CONFIG1
 	0x02,
-        //CONFIG2
-        0x80,
-        //LOFF
-        0x10,
+	//CONFIG2
+	0x80,
+	//LOFF
+	0x10,
 	//CH1SET (PGA gain = 6)
-        0x00,
+	0x00,
 	//CH2SET (PGA gain = 6)
-        0x00,
+	0x00,
 	//RLD_SENS
 	0x00,
 	//LOFF_SENS
 	0x00,    
-        //LOFF_STAT
-        0x00,
-        //RESP1
-        0x02,
+	//LOFF_STAT
+	0x00,
+	//RESP1
+	0x02,
 	//RESP2
 	0x03,
 	//GPIO
-        0x0C 
+	0x0C
 };		
 unsigned char 	ADS_register_settings[12] = {
 	//Device ID read only
 	ADS1x9x_REG_ID_VALUE,
    	//CONFIG1 (continous mode, sample rate 125SPS)
 	0x00,
-        //CONFIG2
-        0xE0,
-        //LOFF
-        0x10,
+	//CONFIG2
+	0xE0,
+	//LOFF
+	0x10,
 	//CH1SET (Channel 1 power down)
-        0x80,
+	0x80,
 	//CH2SET (PGA gain = 12)
-        0x60,
+	0x60,
 	//RLD_SENS
 	0x2C,
 	//LOFF_SENS
 	0x00,    
-        //LOFF_STAT
-        0x08,
-        //RESP1
-        0x02,
+	//LOFF_STAT
+	0x08,
+	//RESP1
+	0x02,
 	//RESP2
 	0x03,
 	//GPIO
-        0x0C 
+     0x0C
 };
 
       /** HARDWARE CONTROL */
@@ -460,7 +460,7 @@ static bool compare_reg_value()
 /**********************************************************************************************************
 * ADS1x9x_Init          				                  		
 ***********************************************************************************************************/
-short ADS1x9x_Init(void)
+uint8_t ADS1x9x_Init(void)
 {
    volatile unsigned short Init_i, j;
    bool error = false;

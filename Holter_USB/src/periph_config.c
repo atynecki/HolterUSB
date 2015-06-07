@@ -91,18 +91,21 @@ static void RTC_init (void)
 
 void peripherial_init () 
 {
-	short error_check;
+	uint8_t error_check;
     GPIO_init();
     RTC_init();
+
     error_check = ADS1x9x_Init();
     if(error_check == 1)
     	app_get_flags()->device_error |= 1 << ADS_ERR;
+
     error_check = flash_init();
     if(error_check != 0)
         	app_get_flags()->device_error |= 1 << FLASH_ERR;
+
     error_check = USB_setup(TRUE,TRUE);
-    if(error_check != 0)
-           	app_get_flags()->device_error |= 1 << USB_ERR;
+	if(error_check != 0)
+			app_get_flags()->device_error |= 1 << USB_ERR;
 }
 
 void interrupt_enable (void) 

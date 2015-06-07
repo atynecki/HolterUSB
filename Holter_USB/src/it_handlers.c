@@ -28,7 +28,7 @@ __interrupt void Port_1(void)
         run_key_state = 0;
         disable_ADS1x9x_Conversion ();
         
-        GPIO_setOutputLowOnPin (GPIO_PORT_P5,GPIO_PIN0);
+        GPIO_setOutputLowOnPin(GPIO_PORT_P5,GPIO_PIN0);
       }       
     }
     
@@ -52,16 +52,16 @@ __interrupt void Port_1(void)
      if (backup_key_state == 0){
     	backup_key_state = 1;
 
-    	clear_write_address();
-    	create_header_frame();
+    	//clear_write_address();
+    	//create_header_frame();
 
 		GPIO_setOutputHighOnPin(GPIO_PORT_P5,GPIO_PIN1);
-		app_get_flags()->backup_enable = true;
+		//app_get_flags()->backup_enable = true;
      }
      else {
         backup_key_state = 0;
         GPIO_setOutputLowOnPin (GPIO_PORT_P5,GPIO_PIN1);
-        app_get_flags()->backup_enable = false;
+        //app_get_flags()->backup_enable = false;
      }
    }
 }

@@ -312,9 +312,9 @@ bool compare_address()
     return false;
 }
 
-short flash_init()
+uint8_t flash_init()
 {
-    unsigned char result;
+    uint8_t result;
 	Flash_MT298G08AAAWP_init();
         
 	/* check communication */

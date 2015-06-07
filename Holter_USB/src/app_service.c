@@ -69,6 +69,8 @@ void collect_data(unsigned char *data)
     	create_send_frame(data_frame);
     	cdcSendDataInBackground(send_frame, 10, CDC0_INTFNUM, 1000);
     }
+
+    GPIO_toggleOutputOnPin(GPIO_PORT_P7,GPIO_PIN6);
 }
 
 void visualization(void)
@@ -85,6 +87,7 @@ void visualization(void)
 			GPIO_setOutputHighOnPin(GPIO_PORT_P5,GPIO_PIN0);
 			DELAY_1S();
 			GPIO_setOutputLowOnPin(GPIO_PORT_P5,GPIO_PIN0);
+			DELAY_1S();
 		}
 	}
 }

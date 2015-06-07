@@ -2,6 +2,7 @@
 #define ADS1x9x_H_
 
 #include <stdbool.h>
+#include <stdint.h>
 /****************************************************************/
 /* Global functions*/
 /****************************************************************/
@@ -40,7 +41,7 @@ void Read_Data (void);
 /** API FUNCTIONS */
 void ADS1x9x_Reg_Init(unsigned char* reg_tab);
 void ADS1x9x_Read_All_Regs(unsigned char ADS1x9xeg_buf[]);
-short ADS1x9x_Init(void);
+uint8_t ADS1x9x_Init(void);
 void enable_ADS1x9x_Conversion (void);
 void disable_ADS1x9x_Conversion (void);
 

@@ -5,12 +5,10 @@ void main ()
 {
     WDT_A_hold(WDT_A_BASE);
 
-    // Minimum Vcore setting required for the USB API is PMM_CORE_LEVEL_2
-    PMM_setVCore(PMM_CORE_LEVEL_2);
+    // Minimum Vcore setting required for the USB API is PMM_CORE_LEVEL_3
+    PMM_setVCore(PMM_CORE_LEVEL_3);
 
-    //TODO sprawdziæ która opacja dzia³a
-    initClocks(24000000);   // Config clocks. MCLK=SMCLK=FLL=24MHz; ACLK=REFO=32kHz
-   // CLOCK_init();
+   initClocks(USB_MCLK_FREQ);   // Config clocks. MCLK=SMCLK=FLL=8MHz; ACLK=REFO=32kHz
 
     peripherial_init ();
 

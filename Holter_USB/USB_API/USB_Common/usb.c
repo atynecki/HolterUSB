@@ -419,6 +419,7 @@ uint8_t USB_setup(uint8_t connectEnable, uint8_t eventsEnable)
 	if (connectEnable) {
 		if (USB_connectionInfo() & kUSB_vbusPresent){
 			if (USB_enable() == kUSB_succeed){
+				USB_enable();
 				USB_reset();
 				USB_connect();
 			}

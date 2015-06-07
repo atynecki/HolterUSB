@@ -138,7 +138,7 @@ void clear_write_address();
 void clear_read_address();
 bool compare_address();
 
-short flash_init();
+uint8_t flash_init();
 short flash_reset();
 
 void send_data_to_flash(unsigned char *data_frame);
