@@ -9,9 +9,9 @@ Calendar time_data;
     
 uint32_t test_counter = 0;
 uint8_t sample_counter = 0;
-unsigned char data_frame[DATA_FRAME_LENGTH] = {0};
-unsigned char read_frame[DATA_FRAME_LENGTH] = {0};
-unsigned char send_frame[DATA_SEND_FRAME_LENGTH] = {0xA5, 0x5A, 0xFE, 0, 0, 0, 0, 0, 0, 0};
+uint8_t data_frame[DATA_FRAME_LENGTH] = {0};
+uint8_t read_frame[DATA_FRAME_LENGTH] = {0};
+uint8_t send_frame[DATA_SEND_FRAME_LENGTH] = {0xA5, 0x5A, 0xFE, 0, 0, 0, 0, 0, 0, 0, 0};
     
 app_data_p app_get_data (void)
 {
@@ -23,23 +23,6 @@ general_flags_p app_get_flags (void)
   return &flags;
 }
 
-void create_header_frame ()
-{
-	time_data = RTC_A_getCalendarTime(RTC_A_BASE);
-
-	data_frame[0] = time_data.DayOfMonth;
-	data_frame[1] = time_data.Month;
-	data_frame[2] = (uint8_t)(time_data.Year >> 8);
-	data_frame[3] = (uint8_t)(time_data.Year);
-
-	data_frame[4] = time_data.Hours;
-	data_frame[5] = time_data.Minutes;
-	data_frame[6] = time_data.Seconds;
-
-	if(app_get_flags()->backup_enable == true)
-		send_data_to_flash(data_frame);
-}
-
 static void create_send_frame (uint8_t * frame)
 {
 	int i = 3;
@@ -48,29 +31,51 @@ static void create_send_frame (uint8_t * frame)
 	 }
 }
 
+void create_header_frame ()
+{
+	time_data = RTC_A_getCalendarTime(RTC_A_BASE);
+
+	data_frame[0] = HEADER_FRAME_FLAG;
+	data_frame[1] = time_data.DayOfMonth;
+	data_frame[2] = time_data.Month;
+	data_frame[3] = (uint8_t)(time_data.Year >> 8);
+	data_frame[4] = (uint8_t)(time_data.Year);
+
+	data_frame[5] = time_data.Hours;
+	data_frame[6] = time_data.Minutes;
+	data_frame[7] = time_data.Seconds;
+
+	if(app_get_flags()->backup_enable == true)
+		send_data_to_flash(data_frame);
+	 else if (app_get_flags()->stream_enable == true){
+		create_send_frame(data_frame);
+		cdcSendDataInBackground(send_frame, 11, CDC0_INTFNUM, 1000);
+	}
+}
+
 void collect_data(unsigned char *data)
 {
     time_data = RTC_A_getCalendarTime(RTC_A_BASE);
     
-    data_frame[0] = ++sample_counter;
+    data_frame[0] = DATA_FRAME_FLAG;
+
+    data_frame[1] = ++sample_counter;
     
     //CH2 data
-    data_frame[1] = data[3];
-    data_frame[2] = data[4];
-    data_frame[3] = data[5];
+    data_frame[2] = data[3];
+    data_frame[3] = data[4];
+    data_frame[4] = data[5];
     
-    data_frame[4] = time_data.Hours;
-    data_frame[5] = time_data.Minutes;
-    data_frame[6] = time_data.Seconds;
+    data_frame[5] = time_data.Hours;
+    data_frame[6] = time_data.Minutes;
+    data_frame[7] = time_data.Seconds;
     
     if(app_get_flags()->backup_enable == true)
     	send_data_to_flash(data_frame);
     else if (app_get_flags()->stream_enable == true){
     	create_send_frame(data_frame);
-    	cdcSendDataInBackground(send_frame, 10, CDC0_INTFNUM, 1000);
+    	cdcSendDataInBackground(send_frame, 11, CDC0_INTFNUM, 1000);
     }
-
-    GPIO_toggleOutputOnPin(GPIO_PORT_P7,GPIO_PIN6);
 }
 
 void visualization(void)
@@ -102,7 +107,7 @@ transfer_result transfer_data ()
 
     create_send_frame(read_frame);
 
-    res = cdcSendDataInBackground(send_frame, 10, CDC0_INTFNUM, 1000);
+    res = cdcSendDataInBackground(send_frame, 11, CDC0_INTFNUM, 1000);
 	if(res!=0)
 		  return TRANSFER_SEND_ERROR;
 

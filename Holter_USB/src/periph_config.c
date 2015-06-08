@@ -5,36 +5,6 @@
 
 Calendar my_calendar;
 
-void CLOCK_init ()
-{
-	//Port select XT1
-	GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P5, GPIO_PIN4 + GPIO_PIN5);
-
-	//Port select XT2
-	GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P5, GPIO_PIN2 + GPIO_PIN3);
-
-	//Initializes the XT1 and XT2 crystal frequencies being used
-	UCS_setExternalClockSource(UCS_XT1_CRYSTAL_FREQUENCY,
-							   UCS_XT2_CRYSTAL_FREQUENCY);
-
-	//Initialize XT1
-	UCS_LFXT1Start(UCS_XT1_DRIVE0,
-				   UCS_XCAP_3);
-
-	//Initialize XT2
-	UCS_XT2Start(UCS_XT2DRIVE_24MHZ_32MHZ);
-	
-	//Select XT1 as ACLK source
-	UCS_clockSignalInit(UCS_ACLK,
-						UCS_XT1CLK_SELECT,
-						UCS_CLOCK_DIVIDER_1);
-
-	//Select XT2 as SMCLK source
-	UCS_clockSignalInit(UCS_SMCLK,
-						UCS_XT2CLK_SELECT,
-						UCS_CLOCK_DIVIDER_1);
-}
-
 void initClocks(uint32_t mclkFreq)
 {
 	UCS_clockSignalInit(

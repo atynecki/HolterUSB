@@ -19,6 +19,7 @@ __interrupt void Port_1(void)
         run_key_state = 1;
        
         app_get_flags()->stream_enable = true;
+        create_header_frame();
       
         GPIO_setOutputHighOnPin(GPIO_PORT_P5,GPIO_PIN0);
         enable_ADS1x9x_Conversion ();

@@ -32,5 +32,7 @@
 #endif
 
 #define DATA_FRAME_LENGTH			8
-#define DATA_SEND_FRAME_LENGTH		10
+#define DATA_SEND_FRAME_LENGTH		11
+#define HEADER_FRAME_FLAG			1
+#define DATA_FRAME_FLAG				0
 #endif
