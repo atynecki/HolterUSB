@@ -31,38 +31,38 @@
  * --/COPYRIGHT--*/
 #include "inc/hw_memmap.h"
 
-#include "adc10_a.h"
-#include "adc12_a.h"
-#include "aes.h"
-#include "battbak.h"
-#include "comp_b.h"
-#include "crc.h"
-#include "dac12_a.h"
+//#include "adc10_a.h"
+//#include "adc12_a.h"
+//#include "aes.h"
+//#include "battbak.h"
+//#include "comp_b.h"
+//#include "crc.h"
+//#include "dac12_a.h"
 #ifdef DRIVERLIB_LEGACY_MODE
     #include "deprecated/dma.h"
 #else
     #include "dma.h"
 #endif
-#include "eusci_a_spi.h"
-#include "eusci_a_uart.h"
-#include "eusci_b_i2c.h"
-#include "eusci_b_spi.h"
-#include "eusci_i2c.h"
-#include "eusci_spi.h"
-#include "eusci_uart.h"
+//#include "eusci_a_spi.h"
+//#include "eusci_a_uart.h"
+//#include "eusci_b_i2c.h"
+//#include "eusci_b_spi.h"
+//#include "eusci_i2c.h"
+//#include "eusci_spi.h"
+//#include "eusci_uart.h"
 #ifdef DRIVERLIB_LEGACY_MODE
     #include "deprecated/flashctl.h"
 #else
-    #include "flashctl.h"
+    //#include "flashctl.h"
 #endif
 #include "gpio.h"
-#include "ldopwr.h"
+//#include "ldopwr.h"
 #ifdef DRIVERLIB_LEGACY_MODE
     #include "deprecated/mpy32.h"
 #else
-    #include "mpy32.h"
+    //#include "mpy32.h"
 #endif
-#include "pmap.h"
+//#include "pmap.h"
 #ifdef DRIVERLIB_LEGACY_MODE
     #include "deprecated/pmm.h"
 #else
@@ -71,13 +71,13 @@
 #ifdef DRIVERLIB_LEGACY_MODE
     #include "deprecated/ram.h"
 #else
-    #include "ram.h"
+    //#include "ram.h"
 #endif
-#include "ref.h"
+//#include "ref.h"
 #include "rtc_a.h"
-#include "rtc_b.h"
-#include "rtc_c.h"
-#include "sd24_b.h"
+//#include "rtc_b.h"
+//#include "rtc_c.h"
+//#include "sd24_b.h"
 #ifdef DRIVERLIB_LEGACY_MODE
     #include "deprecated/sfr.h"
 #else
@@ -88,22 +88,22 @@
 #else
     #include "sysctl.h"
 #endif
-#include "tec.h"
-#include "timer_a.h"
-#include "timer_b.h"
-#include "timer_d.h"
+//#include "tec.h"
+//#include "timer_a.h"
+//#include "timer_b.h"
+//#include "timer_d.h"
 #include "tlv.h"
 #ifdef DRIVERLIB_LEGACY_MODE
     #include "deprecated/ucs.h"
 #else
     #include "ucs.h"
 #endif
-#include "usci_a_spi.h"
-#include "usci_a_uart.h"
-#include "usci_b_i2c.h"
+//#include "usci_a_spi.h"
+//#include "usci_a_uart.h"
+//#include "usci_b_i2c.h"
 #include "usci_b_spi.h"
-#include "usci_i2c.h"
-#include "usci_spi.h"
-#include "usci_uart.h"
+//#include "usci_i2c.h"
+//#include "usci_spi.h"
+//#include "usci_uart.h"
 #include "wdt_a.h"
 //Released_Version_4_20_00

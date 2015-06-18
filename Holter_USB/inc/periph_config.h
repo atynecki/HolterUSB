@@ -4,7 +4,6 @@
 
 /** Peripherals config header */
 
-
 #include "ADS1292_driver.h"
 #include "Flash_driver.h"
 #include "app_config.h"
@@ -15,9 +14,10 @@
 #include "USB_API/USB_CDC_API/UsbCdc.h"
 #include "USB_app/usbConstructs.h"
 
-void CLOCK_init(void);
 void initClocks(uint32_t mclkFreq);
-void interrupt_enable (void);
+void set_calender_time(Calendar time);
 void peripherial_init(void);
+void visualization(void);
+void interrupt_enable (void);
 
 #endif

@@ -6,6 +6,13 @@
 
 #include "periph_config.h"
 
+/* Host command */
+#define STREAM_COMMAND				1
+#define SAVE_DATA_COMMAND			2
+#define DOWNLOAD_DATA_COMMAND		3
+#define ERASE_FLASH_COMMAND			4
+#define TIME_RECEIVED_COMMAND		5
+
 /* Results of data transfer function */
 typedef enum {
 	TRANSFER_OK = 0,		/* 0: Successful */
@@ -20,26 +27,29 @@ typedef enum{
 } device_error_flags;
 
 typedef struct{
-  uint32_t signal_data;
-  uint32_t date;
-  uint32_t time_data;
+  //uint8_t data_frame[DATA_FRAME_LENGTH];
+ // uint8_t send_frame[DATA_SEND_FRAME_LENGTH];
 } app_data_t, *app_data_p;
 
 typedef struct {
   bool data_transfer;
   bool stream_enable;
   bool backup_enable;
+  bool device_run;
   uint8_t device_error;
-  uint8_t transfer_error;
 } general_flags_t, *general_flags_p;
 
 app_data_p app_get_data(void);
 general_flags_p app_get_flags (void);
 
+void general_flag_init(void);
+
 void create_header_frame(void);
 void collect_data(unsigned char *data);
-void visualization(void);
+
+void parse_command (uint8_t* data_buff);
 
 transfer_result transfer_data(void);
 
+void power_manage(void);
 #endif

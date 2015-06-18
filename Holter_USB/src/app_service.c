@@ -6,21 +6,28 @@ app_data_t app_data;
 general_flags_t flags;
 
 Calendar time_data;
-    
-uint32_t test_counter = 0;
+
 uint8_t sample_counter = 0;
-uint8_t data_frame[DATA_FRAME_LENGTH] = {0};
-uint8_t read_frame[DATA_FRAME_LENGTH] = {0};
-uint8_t send_frame[DATA_SEND_FRAME_LENGTH] = {0xA5, 0x5A, 0xFE, 0, 0, 0, 0, 0, 0, 0, 0};
+extern uint8_t data_frame[DATA_FRAME_LENGTH] = {0};
+extern uint8_t send_frame[DATA_SEND_FRAME_LENGTH] = {0xA5, 0x5A, 0xFE, 0, 0, 0, 0, 0, 0, 0, 0};
     
-app_data_p app_get_data (void)
+app_data_p app_get_data ()
 {
   return &app_data;
 }
 
-general_flags_p app_get_flags (void)
+general_flags_p app_get_flags ()
 {
   return &flags;
+}
+
+void general_flag_init ()
+{
+	app_get_flags()->device_run = false;
+
+	app_get_flags()->stream_enable = false;
+	app_get_flags()->backup_enable = false;
+	app_get_flags()->data_transfer = false;
 }
 
 static void create_send_frame (uint8_t * frame)
@@ -47,7 +54,7 @@ void create_header_frame ()
 
 	if(app_get_flags()->backup_enable == true)
 		send_data_to_flash(data_frame);
-	 else if (app_get_flags()->stream_enable == true){
+	 if (app_get_flags()->stream_enable == true){
 		create_send_frame(data_frame);
 		cdcSendDataInBackground(send_frame, 11, CDC0_INTFNUM, 1000);
 	}
@@ -72,27 +79,34 @@ void collect_data(unsigned char *data)
     
     if(app_get_flags()->backup_enable == true)
     	send_data_to_flash(data_frame);
-    else if (app_get_flags()->stream_enable == true){
+    if (app_get_flags()->stream_enable == true){
     	create_send_frame(data_frame);
     	cdcSendDataInBackground(send_frame, 11, CDC0_INTFNUM, 1000);
     }
 }
 
-void visualization(void)
+void parse_command (uint8_t* data_buff)
 {
-	if(app_get_flags()->device_error == 0){
-		GPIO_setOutputHighOnPin(GPIO_PORT_P5,GPIO_PIN0);
-		GPIO_setOutputHighOnPin(GPIO_PORT_P5,GPIO_PIN1);
-		DELAY_1S();
-		GPIO_setOutputLowOnPin(GPIO_PORT_P5,GPIO_PIN0);
-		GPIO_setOutputLowOnPin(GPIO_PORT_P5,GPIO_PIN1);
-	}
-	else {
-		while(1){
-			GPIO_setOutputHighOnPin(GPIO_PORT_P5,GPIO_PIN0);
-			DELAY_1S();
-			GPIO_setOutputLowOnPin(GPIO_PORT_P5,GPIO_PIN0);
-			DELAY_1S();
+	if(data_buff[0] == 0xEF && data_buff[1] == 0xFE){
+		if(data_buff[2] == STREAM_COMMAND){
+			app_get_flags()->stream_enable = data_buff[3];
+			if(app_get_flags()->stream_enable == true){
+				create_header_frame();
+			}
+		}
+		else if (data_buff[2] == SAVE_DATA_COMMAND){
+			app_get_flags()->backup_enable = data_buff[3];
+			if(app_get_flags()->backup_enable == true){
+				clear_write_address();
+				create_header_frame();
+			}
+
+		}
+		else if (data_buff[2] == DOWNLOAD_DATA_COMMAND){
+			app_get_flags()->data_transfer = data_buff[3];
+		}
+		else if (data_buff[2] == ERASE_FLASH_COMMAND){
+			erase_flash();
 		}
 	}
 }
@@ -101,15 +115,20 @@ transfer_result transfer_data ()
 {
     short res;
     
-    res = read_data_from_flash(read_frame);
+    res = read_data_from_flash(data_frame);
     if(res!=0)
       return TRANSFER_READ_ERROR;
 
-    create_send_frame(read_frame);
+    create_send_frame(data_frame);
 
     res = cdcSendDataInBackground(send_frame, 11, CDC0_INTFNUM, 1000);
 	if(res!=0)
 		  return TRANSFER_SEND_ERROR;
 
     return TRANSFER_OK;
+}
+
+void power_manage ()
+{
+
 }

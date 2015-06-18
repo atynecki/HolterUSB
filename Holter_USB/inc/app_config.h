@@ -10,10 +10,6 @@
 #include "driverlib.h"
 #include "delay.h"
 
-//#define ELECTRODE
-
-#define UCS_XT1_CRYSTAL_FREQUENCY               32768
-#define UCS_XT2_CRYSTAL_FREQUENCY               24000000
 #define USB_MCLK_FREQ 							8000000        // MCLK frequency of MCU, in Hz
 
 #define SECONDS   0
@@ -31,6 +27,7 @@
   #define STATUS_MSB_BIT      0xC4
 #endif
 
+#define RUN_SWITCH_DELAY_MS			2000
 #define DATA_FRAME_LENGTH			8
 #define DATA_SEND_FRAME_LENGTH		11
 #define HEADER_FRAME_FLAG			1

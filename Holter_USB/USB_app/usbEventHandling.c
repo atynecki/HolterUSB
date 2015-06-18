@@ -40,6 +40,9 @@
 #include "USB_API/USB_Common/defMSP430USB.h"
 #include "USB_config/descriptors.h"
 #include "USB_API/USB_Common/usb.h"
+#include "USB_app/usbConstructs.h"
+
+#include "app_service.h"
 
 #ifdef _CDC_
 #include "USB_API/USB_CDC_API/UsbCdc.h"
@@ -183,11 +186,17 @@ void USB_handlePLLStartedEvent(void)
  * This event indicates that data has been received for interface intfNum, but no data receive operation is underway.
  * returns TRUE to keep CPU awake
  */
+#define BUFFER_SIZE 10
+char dataBuffer[BUFFER_SIZE] = "";
+uint16_t count;
 uint8_t USBCDC_handleDataReceived(uint8_t intfNum)
 {
-        //TO DO: You can place your code here
+	count = cdcReceiveDataInBuffer((uint8_t*)dataBuffer, BUFFER_SIZE, CDC0_INTFNUM);
+	if(count == 4){
+		parse_command((uint8_t*)dataBuffer);
+	}
 
-        return TRUE;                            //return FALSE to go asleep after interrupt (in the case the CPU slept before
+	return TRUE;                            //return FALSE to go asleep after interrupt (in the case the CPU slept before
                                                 //interrupt)
 }
 
