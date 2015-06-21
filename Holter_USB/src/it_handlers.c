@@ -53,10 +53,6 @@ __interrupt void Port_1(void)
      
      UCB0IE |= UCRXIE;  // Enable USCI_B0 RX interrupt
    }
-   
-   else if (GPIO_getInterruptStatus(GPIO_PORT_P1,GPIO_PIN6)) {
-
-   }
 }
 
 #pragma vector=USCI_B0_VECTOR

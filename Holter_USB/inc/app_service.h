@@ -34,8 +34,12 @@ typedef struct{
 typedef struct {
   bool data_transfer;
   bool stream_enable;
+  bool stream_start;
   bool backup_enable;
+  bool backup_start;
+  bool erase_flash;
   bool device_run;
+  bool data_ready;
   uint8_t device_error;
 } general_flags_t, *general_flags_p;
 
@@ -46,6 +50,7 @@ void general_flag_init(void);
 
 void create_header_frame(void);
 void collect_data(unsigned char *data);
+void send_data(void);
 
 void parse_command (uint8_t* data_buff);
 

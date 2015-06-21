@@ -314,7 +314,7 @@ bool compare_address()
 
 uint8_t flash_init()
 {
-    uint8_t result;
+    volatile uint8_t result;
 	Flash_MT298G08AAAWP_init();
         
 	/* check communication */

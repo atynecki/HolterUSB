@@ -6,6 +6,7 @@ app_data_t app_data;
 general_flags_t flags;
 
 Calendar time_data;
+uint32_t timestamp;
 
 uint8_t sample_counter = 0;
 extern uint8_t data_frame[DATA_FRAME_LENGTH] = {0};
@@ -25,9 +26,13 @@ void general_flag_init ()
 {
 	app_get_flags()->device_run = false;
 
+	app_get_flags()->stream_start = false;
 	app_get_flags()->stream_enable = false;
+	app_get_flags()->backup_start = false;
 	app_get_flags()->backup_enable = false;
 	app_get_flags()->data_transfer = false;
+
+	app_get_flags()->data_ready = false;
 }
 
 static void create_send_frame (uint8_t * frame)
@@ -62,51 +67,71 @@ void create_header_frame ()
 
 void collect_data(unsigned char *data)
 {
-    time_data = RTC_A_getCalendarTime(RTC_A_BASE);
-    
-    data_frame[0] = DATA_FRAME_FLAG;
-
-    data_frame[1] = ++sample_counter;
-    
     //CH2 data
     data_frame[2] = data[3];
     data_frame[3] = data[4];
     data_frame[4] = data[5];
     
-    data_frame[5] = time_data.Hours;
-    data_frame[6] = time_data.Minutes;
-    data_frame[7] = time_data.Seconds;
-    
-    if(app_get_flags()->backup_enable == true)
-    	send_data_to_flash(data_frame);
-    if (app_get_flags()->stream_enable == true){
-    	create_send_frame(data_frame);
-    	cdcSendDataInBackground(send_frame, 11, CDC0_INTFNUM, 1000);
-    }
+    app_get_flags()->data_ready = true;
+}
+
+void send_data ()
+{
+	time_data = RTC_A_getCalendarTime(RTC_A_BASE);
+	timestamp = time_data.Hours*3600 + time_data.Minutes*60 + time_data.Seconds;
+
+	data_frame[0] = DATA_FRAME_FLAG;
+
+	data_frame[1] = time_data.DayOfMonth;
+
+	data_frame[5] = (uint8_t)(timestamp >> 16);
+	data_frame[6] = (uint8_t)(timestamp >> 8);
+	data_frame[7] = (uint8_t)(timestamp);
+
+	if(app_get_flags()->backup_enable == true)
+		send_data_to_flash(data_frame);
+	if (app_get_flags()->stream_enable == true){
+		create_send_frame(data_frame);
+		cdcSendDataInBackground(send_frame, 11, CDC0_INTFNUM, 1000);
+	}
 }
 
 void parse_command (uint8_t* data_buff)
 {
 	if(data_buff[0] == 0xEF && data_buff[1] == 0xFE){
 		if(data_buff[2] == STREAM_COMMAND){
-			app_get_flags()->stream_enable = data_buff[3];
-			if(app_get_flags()->stream_enable == true){
-				create_header_frame();
+			app_get_flags()->stream_start = data_buff[3];
+			if(app_get_flags()->stream_start == false){
+				GPIO_setOutputHighOnPin(GPIO_PORT_P5,GPIO_PIN1);
+				DELAY_1S();
+				GPIO_setOutputLowOnPin(GPIO_PORT_P5,GPIO_PIN1);
 			}
 		}
 		else if (data_buff[2] == SAVE_DATA_COMMAND){
-			app_get_flags()->backup_enable = data_buff[3];
-			if(app_get_flags()->backup_enable == true){
-				clear_write_address();
-				create_header_frame();
+			app_get_flags()->backup_start = data_buff[3];
+			if(app_get_flags()->backup_start == false){
+				GPIO_setOutputLowOnPin(GPIO_PORT_P5,GPIO_PIN1);
 			}
-
 		}
 		else if (data_buff[2] == DOWNLOAD_DATA_COMMAND){
 			app_get_flags()->data_transfer = data_buff[3];
+			//TODO zatrzymanie wszystkich pomiarów
 		}
+
 		else if (data_buff[2] == ERASE_FLASH_COMMAND){
-			erase_flash();
+			app_get_flags()->erase_flash = data_buff[3];
+		}
+
+		else if(data_buff[2] == TIME_RECEIVED_COMMAND){
+			Calendar current_time;
+			current_time.Seconds = data_buff[3];
+			current_time.Minutes = data_buff[4];
+			current_time.Hours = data_buff[5];
+			current_time.DayOfMonth = data_buff[6];
+			current_time.Month = data_buff[7];
+			current_time.Year = data_buff[8];
+
+			set_calender_time(current_time);
 		}
 	}
 }

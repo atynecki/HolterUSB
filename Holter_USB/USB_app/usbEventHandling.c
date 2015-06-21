@@ -192,7 +192,7 @@ uint16_t count;
 uint8_t USBCDC_handleDataReceived(uint8_t intfNum)
 {
 	count = cdcReceiveDataInBuffer((uint8_t*)dataBuffer, BUFFER_SIZE, CDC0_INTFNUM);
-	if(count == 4){
+	if((count == 4) || (count == 9)){
 		parse_command((uint8_t*)dataBuffer);
 	}
 
