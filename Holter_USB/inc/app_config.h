@@ -10,26 +10,24 @@
 #include "driverlib.h"
 #include "delay.h"
 
-#define USB_MCLK_FREQ 							8000000        // MCLK frequency of MCU, in Hz
+#define USB_MCLK_FREQ 			8000000        // MCLK frequency of MCU, in Hz
 
-#define SECONDS   0
-#define MINUTES   0
-#define HOURS     0
-#define DAY       1
-#define MONTH     1
-#define YEAR      1970
+#define SECONDS   				0
+#define MINUTES   				0
+#define HOURS     				0
+#define DAY       				1
+#define MONTH     				1
+#define YEAR      				1970
 
-#define ELECTRODE
 
-#ifdef ELECTRODE 
-  #define STATUS_MSB_BIT      0xC0
-#else
-  #define STATUS_MSB_BIT      0xC4
-#endif
+#define STATUS_MSB_BIT      	0xC0
 
 #define RUN_SWITCH_DELAY_MS			2000
 #define DATA_FRAME_LENGTH			8
 #define DATA_SEND_FRAME_LENGTH		11
-#define HEADER_FRAME_FLAG			1
+
 #define DATA_FRAME_FLAG				0
+#define HEADER_FRAME_FLAG			1
+
+#define SAMPLE_PAERIOD				1000/125 //1000ms/sampling
 #endif

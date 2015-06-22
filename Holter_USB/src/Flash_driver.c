@@ -312,6 +312,13 @@ bool compare_address()
     return false;
 }
 
+void copy_write_address (struct FlashAddress address_dst)
+{
+	address_dst.ucPageNum = Write_Flash_Address.ucPageNum;
+	address_dst.usBlockNum = Write_Flash_Address.usBlockNum;
+	address_dst.usColNum = Write_Flash_Address.usColNum;
+}
+
 uint8_t flash_init()
 {
     volatile uint8_t result;
@@ -416,18 +423,18 @@ void send_data_to_flash(unsigned char *data_frame)
 	
 	if (Write_Flash_Address.usColNum == PAGE_SIZE)
 	{
-              Write_Flash_Address.usColNum=0;
-              Write_Flash_Address.ucPageNum++;
-              if (Write_Flash_Address.ucPageNum == PAGES_PER_BLOCK)
-              {
-                      Write_Flash_Address.ucPageNum = 0;
-                      Write_Flash_Address.usBlockNum++;
-                      if (Write_Flash_Address.usBlockNum == MAX_BLOCKS)
-                      {
-                              Write_Flash_Address.usBlockNum = MAX_BLOCKS-1;
-                              Write_Flash_Address.ucPageNum = PAGES_PER_BLOCK-1;
-                      }
-              }
+		  Write_Flash_Address.usColNum=0;
+		  Write_Flash_Address.ucPageNum++;
+		  if (Write_Flash_Address.ucPageNum == PAGES_PER_BLOCK)
+		  {
+			  Write_Flash_Address.ucPageNum = 0;
+			  Write_Flash_Address.usBlockNum++;
+			  if (Write_Flash_Address.usBlockNum == MAX_BLOCKS)
+			  {
+					  Write_Flash_Address.usBlockNum = MAX_BLOCKS-1;
+					  Write_Flash_Address.ucPageNum = PAGES_PER_BLOCK-1;
+			  }
+		  }
       }
 }
 

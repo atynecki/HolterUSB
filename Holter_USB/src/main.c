@@ -26,17 +26,41 @@ void main ()
 			DELAY_1S();
 			GPIO_setOutputLowOnPin(GPIO_PORT_P5,GPIO_PIN1);
 			create_header_frame();
+			app_get_data()->timestamp = 0;
+    	}
+
+    	if(app_get_flags()->stream_stop == true){
+    		app_get_flags()->stream_stop = false;
+    		app_get_flags()->stream_enable = false;
+			GPIO_setOutputHighOnPin(GPIO_PORT_P5,GPIO_PIN1);
+			DELAY_1S();
+			GPIO_setOutputLowOnPin(GPIO_PORT_P5,GPIO_PIN1);
     	}
 
     	if(app_get_flags()->backup_start == true){
     		app_get_flags()->backup_start = false;
     		app_get_flags()->backup_enable = true;
+
+			set_exam_start_time();
+			app_get_data()->timestamp = 0;
+
 			GPIO_setOutputHighOnPin(GPIO_PORT_P5,GPIO_PIN1);
-			clear_write_address();
-			create_header_frame();
     	}
 
+    	if(app_get_flags()->backup_stop == true){
+			app_get_flags()->backup_stop = false;
+			app_get_flags()->backup_enable = false;
+
+			copy_write_address(app_get_data()->tail_address);
+			set_exam_stop_time();
+
+			GPIO_setOutputLowOnPin(GPIO_PORT_P5,GPIO_PIN1);
+
+		}
+
     	if(app_get_flags()->data_transfer == true){
+    		//TODO zatrzymanie wszystkich pomiarów
+
     		transfer_data();
     	}
 

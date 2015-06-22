@@ -6,7 +6,6 @@ app_data_t app_data;
 general_flags_t flags;
 
 Calendar time_data;
-uint32_t timestamp;
 
 uint8_t sample_counter = 0;
 extern uint8_t data_frame[DATA_FRAME_LENGTH] = {0};
@@ -57,36 +56,56 @@ void create_header_frame ()
 	data_frame[6] = time_data.Minutes;
 	data_frame[7] = time_data.Seconds;
 
-	if(app_get_flags()->backup_enable == true)
-		send_data_to_flash(data_frame);
 	 if (app_get_flags()->stream_enable == true){
 		create_send_frame(data_frame);
 		cdcSendDataInBackground(send_frame, 11, CDC0_INTFNUM, 1000);
 	}
 }
 
+void set_exam_start_time ()
+{
+	time_data = RTC_A_getCalendarTime(RTC_A_BASE);
+	app_get_data()->exam_start.Seconds = time_data.Seconds;
+	app_get_data()->exam_start.Minutes = time_data.Minutes;
+	app_get_data()->exam_start.Hours = time_data.Hours;
+
+	app_get_data()->exam_start.DayOfMonth = time_data.DayOfMonth;
+	app_get_data()->exam_start.Month = time_data.Month;
+	app_get_data()->exam_start.Year = time_data.Year;
+}
+
+void set_exam_stop_time ()
+{
+	time_data = RTC_A_getCalendarTime(RTC_A_BASE);
+	app_get_data()->exam_end.Seconds = time_data.Seconds;
+	app_get_data()->exam_end.Minutes = time_data.Minutes;
+	app_get_data()->exam_end.Hours = time_data.Hours;
+
+	app_get_data()->exam_end.DayOfMonth = time_data.DayOfMonth;
+	app_get_data()->exam_end.Month = time_data.Month;
+	app_get_data()->exam_end.Year = time_data.Year;
+}
+
 void collect_data(unsigned char *data)
 {
     //CH2 data
-    data_frame[2] = data[3];
-    data_frame[3] = data[4];
-    data_frame[4] = data[5];
+    data_frame[1] = data[3];
+    data_frame[2] = data[4];
+    data_frame[3] = data[5];
     
     app_get_flags()->data_ready = true;
 }
 
 void send_data ()
 {
-	time_data = RTC_A_getCalendarTime(RTC_A_BASE);
-	timestamp = time_data.Hours*3600 + time_data.Minutes*60 + time_data.Seconds;
+	app_get_data()->timestamp += SAMPLE_PAERIOD;
 
 	data_frame[0] = DATA_FRAME_FLAG;
 
-	data_frame[1] = time_data.DayOfMonth;
-
-	data_frame[5] = (uint8_t)(timestamp >> 16);
-	data_frame[6] = (uint8_t)(timestamp >> 8);
-	data_frame[7] = (uint8_t)(timestamp);
+	data_frame[4] = (uint8_t)(app_get_data()->timestamp >> 24);
+	data_frame[5] = (uint8_t)(app_get_data()->timestamp >> 16);
+	data_frame[6] = (uint8_t)(app_get_data()->timestamp >> 8);
+	data_frame[7] = (uint8_t)(app_get_data()->timestamp);
 
 	if(app_get_flags()->backup_enable == true)
 		send_data_to_flash(data_frame);
@@ -100,57 +119,51 @@ void parse_command (uint8_t* data_buff)
 {
 	if(data_buff[0] == 0xEF && data_buff[1] == 0xFE){
 		if(data_buff[2] == STREAM_COMMAND){
-			app_get_flags()->stream_start = data_buff[3];
-			if(app_get_flags()->stream_start == false){
-				GPIO_setOutputHighOnPin(GPIO_PORT_P5,GPIO_PIN1);
-				DELAY_1S();
-				GPIO_setOutputLowOnPin(GPIO_PORT_P5,GPIO_PIN1);
-			}
+			if(data_buff[3] == 1)
+				app_get_flags()->stream_start = true;
+			else
+				app_get_flags()->stream_stop = true;
 		}
+
 		else if (data_buff[2] == SAVE_DATA_COMMAND){
-			app_get_flags()->backup_start = data_buff[3];
-			if(app_get_flags()->backup_start == false){
-				GPIO_setOutputLowOnPin(GPIO_PORT_P5,GPIO_PIN1);
-			}
+			if(data_buff[3] == 1)
+				app_get_flags()->backup_start = true;
+			else
+				app_get_flags()->backup_stop = true;
 		}
+
 		else if (data_buff[2] == DOWNLOAD_DATA_COMMAND){
-			app_get_flags()->data_transfer = data_buff[3];
-			//TODO zatrzymanie wszystkich pomiarów
+			if(data_buff[3] == 1)
+				app_get_flags()->data_transfer= true;
 		}
 
 		else if (data_buff[2] == ERASE_FLASH_COMMAND){
-			app_get_flags()->erase_flash = data_buff[3];
+			if(data_buff[3] == 1)
+				app_get_flags()->erase_flash = true;
 		}
 
 		else if(data_buff[2] == TIME_RECEIVED_COMMAND){
-			Calendar current_time;
-			current_time.Seconds = data_buff[3];
-			current_time.Minutes = data_buff[4];
-			current_time.Hours = data_buff[5];
-			current_time.DayOfMonth = data_buff[6];
-			current_time.Month = data_buff[7];
-			current_time.Year = data_buff[8];
+			time_data.Seconds = data_buff[3];
+			time_data.Minutes = data_buff[4];
+			time_data.Hours = data_buff[5];
+			time_data.DayOfMonth = data_buff[6];
+			time_data.Month = data_buff[7];
+			int year = (((uint16_t)(data_buff[8])) << 8) | ((uint16_t)(data_buff[9]));
+			time_data.Year = year;
 
-			set_calender_time(current_time);
+			set_calender_time(time_data);
 		}
 	}
 }
 
-transfer_result transfer_data ()
+void transfer_data ()
 {
     short res;
     
     res = read_data_from_flash(data_frame);
-    if(res!=0)
-      return TRANSFER_READ_ERROR;
-
     create_send_frame(data_frame);
 
     res = cdcSendDataInBackground(send_frame, 11, CDC0_INTFNUM, 1000);
-	if(res!=0)
-		  return TRANSFER_SEND_ERROR;
-
-    return TRANSFER_OK;
 }
 
 void power_manage ()

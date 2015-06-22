@@ -38,7 +38,7 @@ enum PORT1_FALSH_CONTROL
 };
 /*****************************************************************************************************************/
 
-#define CLE_OFFSET 0xFFFFF	/*The offset value is for example purpose only */
+#define CLE_OFFSET 0xFFFFF		/*The offset value is for example purpose only */
 #define ALE_OFFSET 0xFFFFE      /*The offset value is for example purpose only */
 #define RW_OFFSET  0xFFFFD      /*The offset value is for example purpose only */
 
@@ -124,9 +124,9 @@ void Flash_MT298G08AAAWP_Nand_Write_8Bytes(void *a_pBuf, unsigned short a_usLen)
 
 #define MAX_READ_STATUS_COUNT 				100000
     
-#define PAGE_SIZE				        2112*4
-#define PAGES_PER_BLOCK			                64
-#define MAX_BLOCKS				        4096
+#define PAGE_SIZE				        	2112*4
+#define PAGES_PER_BLOCK			            64
+#define MAX_BLOCKS				        	4096
 
 struct FlashAddress{
 	unsigned short usBlockNum;
@@ -136,6 +136,7 @@ struct FlashAddress{
 
 void clear_write_address();
 void clear_read_address();
+void copy_write_address (struct FlashAddress address_dst);
 bool compare_address();
 
 uint8_t flash_init();
