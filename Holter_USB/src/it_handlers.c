@@ -4,9 +4,10 @@
 
 uint8_t run_key_state;
 uint16_t switch_counter;
-unsigned char spi_rx_count=0;
-unsigned char data_check[3] = {0};
-unsigned char spi_rx_buf[6] = {0};
+uint8_t dummy_read;
+uint8_t spi_rx_count=0;
+uint8_t spi_rx_buf[9];
+extern uint8_t packet_frame[PACKET_FRAME_LENGTH];
 
 #pragma vector=PORT1_VECTOR
 __interrupt void Port_1(void)
@@ -21,17 +22,11 @@ __interrupt void Port_1(void)
     	  if(run_key_state == 0){
     		  if(switch_counter >=1000){
     			  if (app_get_flags()->device_run == false){
-    				  app_get_flags()->device_run = true;
-
-    				  enable_ADS1x9x_Conversion ();
-    				  GPIO_setOutputHighOnPin(GPIO_PORT_P5,GPIO_PIN0);
+    				  conversion_start();
 				  }
 
 				  else if (app_get_flags()->device_run == true){
-					  app_get_flags()->device_run = false;
-
-					  disable_ADS1x9x_Conversion ();
-					  GPIO_setOutputLowOnPin(GPIO_PORT_P5,GPIO_PIN0);
+					  conversion_stop();
 				  }
     			  return;
     		  }
@@ -41,15 +36,9 @@ __interrupt void Port_1(void)
     
    else if (GPIO_getInterruptStatus(GPIO_PORT_P1,GPIO_PIN1)) {
      GPIO_clearInterruptFlag(GPIO_PORT_P1, GPIO_PIN1);
-   
-     while ((data_check[0] != STATUS_MSB_BIT) || (data_check[1] != 0) || (data_check[2] != 0)) {
-        data_check[0] = (data_check[1] & STATUS_MSB_BIT);
-        data_check[1] = data_check[2];
-        data_check[2] = UCB0RXBUF;
-        UCB0TXBUF = 0;
-     }
-     
-     data_check[0] = 0;
+
+     dummy_read = UCB0RXBUF; 		// Dummy Read
+     UCB0TXBUF = 0;
      
      UCB0IE |= UCRXIE;  // Enable USCI_B0 RX interrupt
    }
@@ -65,15 +54,39 @@ __interrupt void USCI_B0_ISR(void)
 		spi_rx_buf[spi_rx_count++] =UCB0RXBUF;
 		UCB0TXBUF = 0;
 
-		if (spi_rx_count == 6) {
+		if (spi_rx_count == 9) {
 			spi_rx_count = 0;
-			collect_data(spi_rx_buf);
+			if((spi_rx_buf[0] & STATUS_MSB_BIT) && (spi_rx_buf[1] == 0) && (spi_rx_buf[2] == 0)){
+				put_data_to_packet(spi_rx_buf);
+			}
 
 			UCB0IE &= ~UCRXIE;               // Disable USCI_B0 RX interrupt
 		}
 	  }
 }
 
+volatile Calendar actualTime;
+#pragma vector=RTC_VECTOR
+__interrupt void RTC_A_ISR(void)
+{
+    switch(__even_in_range(RTCIV,16))
+    {
+    case 0: break;      //No interrupts
+    case 2: break;      //RTCRDYIFG
+    case 4:             //RTCEVIFG
+    	actualTime = RTC_A_getCalendarTime(RTC_A_BASE);
+    	packet_frame[2] = (uint8_t)(actualTime.Hours);
+    	packet_frame[3] = (uint8_t)(actualTime.Minutes);
+        break;
+    case 6: break;      //RTCAIFG
+    case 8: break;      //RT0PSIFG
+    case 10: break;     //RT1PSIFG
+    case 12: break;     //Reserved
+    case 14: break;     //Reserved
+    case 16: break;     //Reserved
+    default: break;
+    }
+}
 
 #pragma vector = UNMI_VECTOR
 __interrupt void UNMI_ISR (void)

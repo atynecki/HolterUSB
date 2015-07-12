@@ -1,8 +1,7 @@
 #ifndef ADS1x9x_H_
 #define ADS1x9x_H_
 
-#include <stdbool.h>
-#include <stdint.h>
+#include "app_config.h"
 /****************************************************************/
 /* Global functions*/
 /****************************************************************/

@@ -1,7 +1,5 @@
 
-#include "hw_types.h"
 #include "ADS1292_driver.h"
-#include "driverlib.h"
 
 /**************************************************************************************************************************************************
 *	        Global Variables										                              
@@ -39,8 +37,8 @@ unsigned char 	ADS_default_register_settings[12] = {
 unsigned char 	ADS_register_settings[12] = {
 	//Device ID read only
 	ADS1x9x_REG_ID_VALUE,
-   	//CONFIG1 (continous mode, sample rate 125SPS)
-	0x00,
+   	//CONFIG1 (continous mode, sample rate 500SPS)
+	0x02,
 	//CONFIG2
 	0xE0,
 	//LOFF

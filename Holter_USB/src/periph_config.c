@@ -39,7 +39,9 @@ static void GPIO_init ()
         
     GPIO_interruptEdgeSelect(GPIO_PORT_P1,GPIO_PIN6,GPIO_LOW_TO_HIGH_TRANSITION);
     GPIO_interruptEdgeSelect(GPIO_PORT_P1,GPIO_PIN7,GPIO_HIGH_TO_LOW_TRANSITION);
-       
+
+    GPIO_enableInterrupt(GPIO_PORT_P1,GPIO_PIN6);
+    GPIO_enableInterrupt(GPIO_PORT_P1,GPIO_PIN7);
 }
 
 static void calender_init ()
@@ -71,6 +73,9 @@ static void RTC_init ()
 {
     calender_init();
     RTC_A_calendarInit(RTC_A_BASE, my_calendar, RTC_A_FORMAT_BINARY);
+    RTC_A_setCalendarEvent(RTC_A_BASE, RTC_A_CALENDAREVENT_MINUTECHANGE);
+    RTC_A_clearInterrupt(RTC_A_BASE, RTCRDYIFG + RTCTEVIFG + RTCAIFG);
+    RTC_A_enableInterrupt(RTC_A_BASE, RTCTEVIE);
     RTC_A_startClock(RTC_A_BASE);
 }
 
@@ -112,12 +117,4 @@ void visualization ()
 			DELAY_1S();
 		}
 	}
-}
-
-void interrupt_enable ()
-{
-      GPIO_enableInterrupt(GPIO_PORT_P1,GPIO_PIN6);
-      GPIO_enableInterrupt(GPIO_PORT_P1,GPIO_PIN7);
-      
-      __enable_interrupt();
 }

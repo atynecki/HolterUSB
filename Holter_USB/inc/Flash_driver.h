@@ -1,9 +1,7 @@
 #ifndef FLASH_DRIVER_H_
 #define FLASH_DRIVER_H_
 
-#include <stdint.h>
-#include <stdbool.h>
-#include "driverlib.h"
+#include "app_config.h"
 
 #define NAND_FALSH_DATA_DIR P6DIR
 /*****************************************************************************************************************
@@ -84,7 +82,7 @@ void Flash_MT298G08AAAWP_Nand_Write_8Bytes(void *a_pBuf, unsigned short a_usLen)
 #define NAND_IO_RC_PASS 			0
 #define NAND_IO_RC_FAIL 			1
 #define NAND_IO_RC_TIMEOUT 			2
-#define NAND_MEMORY_END                         3
+#define NAND_MEMORY_END             3
 
 /*------------------*/
 /* NAND command set */
@@ -130,13 +128,13 @@ void Flash_MT298G08AAAWP_Nand_Write_8Bytes(void *a_pBuf, unsigned short a_usLen)
 
 struct FlashAddress{
 	unsigned short usBlockNum;
-	unsigned char ucPageNum;
+	unsigned short ucPageNum;
 	unsigned short usColNum;
 };
 
 void clear_write_address();
 void clear_read_address();
-void copy_write_address (struct FlashAddress address_dst);
+void copy_write_address (struct FlashAddress* address_dst);
 bool compare_address();
 
 uint8_t flash_init();

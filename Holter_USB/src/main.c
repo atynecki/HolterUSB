@@ -10,23 +10,28 @@ void main ()
 
     initClocks(USB_MCLK_FREQ);
 
+    general_flag_clear();
+
     peripherial_init ();
 
     visualization();
 
-    general_flag_init();
-
-    interrupt_enable();
+    __enable_interrupt();
 
     while (1) {
+    	if(app_get_flags()->packet_data_ready){
+    		app_get_flags()->packet_data_ready = false;
+    		send_data_packet();
+    	}
+
     	if(app_get_flags()->stream_start == true){
     		app_get_flags()->stream_start = false;
     		app_get_flags()->stream_enable = true;
     		GPIO_setOutputHighOnPin(GPIO_PORT_P5,GPIO_PIN1);
 			DELAY_1S();
 			GPIO_setOutputLowOnPin(GPIO_PORT_P5,GPIO_PIN1);
-			create_header_frame();
-			app_get_data()->timestamp = 0;
+			send_header_frame();
+			send_state();
     	}
 
     	if(app_get_flags()->stream_stop == true){
@@ -35,44 +40,55 @@ void main ()
 			GPIO_setOutputHighOnPin(GPIO_PORT_P5,GPIO_PIN1);
 			DELAY_1S();
 			GPIO_setOutputLowOnPin(GPIO_PORT_P5,GPIO_PIN1);
+			send_state();
     	}
 
     	if(app_get_flags()->backup_start == true){
     		app_get_flags()->backup_start = false;
     		app_get_flags()->backup_enable = true;
 
+    		clear_write_address();
+
 			set_exam_start_time();
-			app_get_data()->timestamp = 0;
 
 			GPIO_setOutputHighOnPin(GPIO_PORT_P5,GPIO_PIN1);
+			send_state();
     	}
 
     	if(app_get_flags()->backup_stop == true){
 			app_get_flags()->backup_stop = false;
 			app_get_flags()->backup_enable = false;
 
-			copy_write_address(app_get_data()->tail_address);
+			copy_write_address(&app_get_data()->tail_address);
 			set_exam_stop_time();
 
 			GPIO_setOutputLowOnPin(GPIO_PORT_P5,GPIO_PIN1);
-
+			send_state();
 		}
 
     	if(app_get_flags()->data_transfer == true){
-    		//TODO zatrzymanie wszystkich pomiarów
+    		if(app_get_flags()->device_run == true)
+    			conversion_stop();
+    		if(app_get_flags()->backup_enable == true){
+    			app_get_flags()->backup_stop = true;
+    			break;
+    		}
 
+    		clear_read_address();
     		transfer_data();
-    	}
 
-    	if(app_get_flags()->data_ready == true){
-    		app_get_flags()->data_ready = false;
-    		send_data();
+    		app_get_flags()->data_transfer = false;
     	}
 
     	if(app_get_flags()->erase_flash == true){
     		app_get_flags()->erase_flash = false;
+
     		GPIO_setOutputHighOnPin(GPIO_PORT_P5,GPIO_PIN1);
+
 			erase_flash();
+
+			clear_write_address();
+			clear_read_address();
 			GPIO_setOutputLowOnPin(GPIO_PORT_P5,GPIO_PIN1);
     	}
 

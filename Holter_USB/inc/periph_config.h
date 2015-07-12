@@ -18,6 +18,5 @@ void initClocks(uint32_t mclkFreq);
 void set_calender_time(Calendar time);
 void peripherial_init(void);
 void visualization(void);
-void interrupt_enable (void);
 
 #endif

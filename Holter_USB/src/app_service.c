@@ -7,10 +7,12 @@ general_flags_t flags;
 
 Calendar time_data;
 
-uint8_t sample_counter = 0;
-extern uint8_t data_frame[DATA_FRAME_LENGTH] = {0};
-extern uint8_t send_frame[DATA_SEND_FRAME_LENGTH] = {0xA5, 0x5A, 0xFE, 0, 0, 0, 0, 0, 0, 0, 0};
-    
+uint8_t packet_tail;
+uint8_t packet_frame[PACKET_FRAME_LENGTH] = {0,0,0,0};
+uint8_t data_send_frame[PACKET_SEND_FRAME_LENGTH] = {0xA5, 0x5A, 0xFE};
+uint8_t time_send_frame[TIME_SEND_FRAME_LENGTH] = {0xA5, 0x5A, 0xFE};
+uint8_t state_send_frame[STATE_FRAME_LENGTH] = {0xA5, 0x5A, 0xFE};
+
 app_data_p app_get_data ()
 {
   return &app_data;
@@ -21,44 +23,50 @@ general_flags_p app_get_flags ()
   return &flags;
 }
 
-void general_flag_init ()
+void general_flag_clear ()
 {
+	app_get_flags()->packet_data_ready = false;
+
 	app_get_flags()->device_run = false;
 
 	app_get_flags()->stream_start = false;
 	app_get_flags()->stream_enable = false;
+	app_get_flags()->stream_stop = false;
 	app_get_flags()->backup_start = false;
 	app_get_flags()->backup_enable = false;
+	app_get_flags()->backup_stop = false;
 	app_get_flags()->data_transfer = false;
+	app_get_flags()->erase_flash = false;
 
-	app_get_flags()->data_ready = false;
+	app_get_flags()->device_error = 0;
 }
 
-static void create_send_frame (uint8_t * frame)
+void conversion_start ()
 {
-	int i = 3;
-	for(i = 3; i<DATA_SEND_FRAME_LENGTH; i++){
-		send_frame[i] = frame[i-3];
-	 }
+	app_get_flags()->device_run = true;
+	send_state();
+	enable_ADS1x9x_Conversion ();
+	packet_tail = 4;
+	app_get_flags()->stream_enable = true;
+	GPIO_setOutputHighOnPin(GPIO_PORT_P5,GPIO_PIN0);
 }
 
-void create_header_frame ()
+void conversion_stop ()
 {
-	time_data = RTC_A_getCalendarTime(RTC_A_BASE);
+	app_get_flags()->device_run = false;
+	send_state();
+	disable_ADS1x9x_Conversion();
+	GPIO_setOutputLowOnPin(GPIO_PORT_P5,GPIO_PIN0);
+}
 
-	data_frame[0] = HEADER_FRAME_FLAG;
-	data_frame[1] = time_data.DayOfMonth;
-	data_frame[2] = time_data.Month;
-	data_frame[3] = (uint8_t)(time_data.Year >> 8);
-	data_frame[4] = (uint8_t)(time_data.Year);
+void put_data_to_packet(uint8_t *data)
+{
+	packet_frame[packet_tail++] = data[6];
+	packet_frame[packet_tail++] = data[7];
 
-	data_frame[5] = time_data.Hours;
-	data_frame[6] = time_data.Minutes;
-	data_frame[7] = time_data.Seconds;
-
-	 if (app_get_flags()->stream_enable == true){
-		create_send_frame(data_frame);
-		cdcSendDataInBackground(send_frame, 11, CDC0_INTFNUM, 1000);
+	if(packet_tail == PACKET_FRAME_LENGTH) {
+		packet_tail = 4;
+		app_get_flags()->packet_data_ready = true;
 	}
 }
 
@@ -86,33 +94,101 @@ void set_exam_stop_time ()
 	app_get_data()->exam_end.Year = time_data.Year;
 }
 
-void collect_data(unsigned char *data)
+static void create_send_frame (uint8_t* frame)
 {
-    //CH2 data
-    data_frame[1] = data[3];
-    data_frame[2] = data[4];
-    data_frame[3] = data[5];
-    
-    app_get_flags()->data_ready = true;
+	int i = 3;
+
+	for(i = 3; i<PACKET_SEND_FRAME_LENGTH; i++){
+		data_send_frame[i] = frame[i-3];
+	}
 }
 
-void send_data ()
+static void create_time_frame (uint8_t index, struct Calendar time)
 {
-	app_get_data()->timestamp += SAMPLE_PAERIOD;
+	time_send_frame[3] = index;
+	time_send_frame[4] = time.DayOfMonth;
+	time_send_frame[5] = time.Month;
+	time_send_frame[6] = (uint8_t)(time.Year >> 8);
+	time_send_frame[7] = (uint8_t)(time.Year);
 
-	data_frame[0] = DATA_FRAME_FLAG;
+	time_send_frame[8] = time.Hours;
+	time_send_frame[9] = time.Minutes;
+	time_send_frame[10] = time.Seconds;
+}
 
-	data_frame[4] = (uint8_t)(app_get_data()->timestamp >> 24);
-	data_frame[5] = (uint8_t)(app_get_data()->timestamp >> 16);
-	data_frame[6] = (uint8_t)(app_get_data()->timestamp >> 8);
-	data_frame[7] = (uint8_t)(app_get_data()->timestamp);
+void send_state ()
+{
+	state_send_frame[3] = STATE_FRAME_FLAG;
 
+	state_send_frame[4] = app_get_flags()->stream_enable;
+	state_send_frame[5] = app_get_flags()->device_run;
+	state_send_frame[6] = app_get_flags()->backup_enable;
+	state_send_frame[7] = app_get_flags()->device_error;
+
+	cdcSendDataInBackground(state_send_frame, STATE_FRAME_LENGTH, CDC0_INTFNUM, 1000);
+}
+
+void send_header_frame ()
+{
+	time_data = RTC_A_getCalendarTime(RTC_A_BASE);
+
+	create_time_frame(HEADER_FRAME_FLAG, time_data);
+
+	cdcSendDataInBackground(time_send_frame, TIME_SEND_FRAME_LENGTH, CDC0_INTFNUM, 1000);
+}
+
+void send_data_packet ()
+{
 	if(app_get_flags()->backup_enable == true)
-		send_data_to_flash(data_frame);
+		send_data_to_flash(packet_frame);
 	if (app_get_flags()->stream_enable == true){
-		create_send_frame(data_frame);
-		cdcSendDataInBackground(send_frame, 11, CDC0_INTFNUM, 1000);
+		create_send_frame(packet_frame);
+		cdcSendDataInBackground(data_send_frame, PACKET_SEND_FRAME_LENGTH, CDC0_INTFNUM, 1000);
 	}
+}
+static void send_transfer_end_frame ()
+{
+	int i;
+	state_send_frame[3] = TRANSFER_END_FLAG;
+	for (i = 4; i < STATE_FRAME_LENGTH; i++)
+		state_send_frame[i] = 0;
+
+	cdcSendDataInBackground(state_send_frame, STATE_FRAME_LENGTH, CDC0_INTFNUM, 1000);
+}
+
+static bool read_flash_data ()
+{
+	uint8_t i;
+	volatile uint32_t sum = 0;
+
+	read_data_from_flash(packet_frame);
+
+	for(i = 0; i < PACKET_FRAME_LENGTH; i++){
+		sum+= packet_frame[i];
+	}
+
+	if(sum != (PACKET_FRAME_LENGTH * 0xFF)){
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
+void transfer_data ()
+{
+	create_time_frame(START_TIME_FLAG, app_get_data()->exam_start);
+	cdcSendDataInBackground(time_send_frame, TIME_SEND_FRAME_LENGTH, CDC0_INTFNUM, 1000);
+
+	create_time_frame(STOP_TIME_FLAG, app_get_data()->exam_end);
+	cdcSendDataInBackground(time_send_frame, TIME_SEND_FRAME_LENGTH, CDC0_INTFNUM, 1000);
+
+	while(read_flash_data()) {
+		create_send_frame(packet_frame);
+		cdcSendDataInBackground(data_send_frame, PACKET_SEND_FRAME_LENGTH, CDC0_INTFNUM, 1000);
+	}
+
+	send_transfer_end_frame();
 }
 
 void parse_command (uint8_t* data_buff)
@@ -153,17 +229,11 @@ void parse_command (uint8_t* data_buff)
 
 			set_calender_time(time_data);
 		}
+
+		else if(data_buff[2] == GET_STATE_COMMAND){
+			send_state();
+		}
 	}
-}
-
-void transfer_data ()
-{
-    short res;
-    
-    res = read_data_from_flash(data_frame);
-    create_send_frame(data_frame);
-
-    res = cdcSendDataInBackground(send_frame, 11, CDC0_INTFNUM, 1000);
 }
 
 void power_manage ()

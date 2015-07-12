@@ -12,6 +12,7 @@
 #define DOWNLOAD_DATA_COMMAND		3
 #define ERASE_FLASH_COMMAND			4
 #define TIME_RECEIVED_COMMAND		5
+#define GET_STATE_COMMAND			6
 
 /* Results of data transfer function */
 typedef enum {
@@ -27,14 +28,14 @@ typedef enum{
 } device_error_flags;
 
 typedef struct{
-	uint32_t timestamp;
 	struct Calendar exam_start;
 	struct Calendar exam_end;
 	struct FlashAddress tail_address;
 } app_data_t, *app_data_p;
 
 typedef struct {
-  bool data_transfer;
+	bool packet_data_ready;
+	bool data_transfer;
   bool stream_enable;
   bool stream_start;
   bool stream_stop;
@@ -43,24 +44,29 @@ typedef struct {
   bool backup_stop;
   bool erase_flash;
   bool device_run;
-  bool data_ready;
   uint8_t device_error;
 } general_flags_t, *general_flags_p;
 
 app_data_p app_get_data(void);
 general_flags_p app_get_flags (void);
 
-void general_flag_init(void);
+void general_flag_clear(void);
 
-void create_header_frame(void);
-void collect_data(unsigned char *data);
+void conversion_start(void);
+void conversion_stop(void);
+
+void put_data_to_packet(uint8_t *data);
+
 void set_exam_start_time(void);
 void set_exam_stop_time(void);
-void send_data(void);
 
-void parse_command (uint8_t* data_buff);
+void send_state(void);
+void send_header_frame(void);
+void send_data_packet(void);
 
 void transfer_data(void);
+
+void parse_command (uint8_t* data_buff);
 
 void power_manage(void);
 #endif
