@@ -286,15 +286,15 @@ void clear_read_address()
 bool compare_address()
 {
   if(Read_Flash_Address.usBlockNum < Write_Flash_Address.usBlockNum)
-    return false;
+    return true;
   else if (Read_Flash_Address.usBlockNum == Write_Flash_Address.usBlockNum){
     if(Read_Flash_Address.ucPageNum < Write_Flash_Address.ucPageNum)
-      return false;
+      return true;
     else if (Read_Flash_Address.ucPageNum == Write_Flash_Address.ucPageNum){
-      if(Read_Flash_Address.usColNum <= Write_Flash_Address.usColNum)
-         return false;
+      if(Read_Flash_Address.usColNum < Write_Flash_Address.usColNum)
+         return true;
       else
-        return true;
+        return false;
     }
     else 
       return false;
@@ -320,11 +320,11 @@ uint8_t flash_init()
 	P7OUT &= ~(enum PORT7_FALSH_CONTROL)FLASH_CE;
 
 	WRITE_NAND_CLE(NAND_CMD_READ_ID);
-	WRITE_NAND_ALE(0x00);	
+	WRITE_NAND_ALE(0x20);
 	READ_NAND_ARRAY(&ucReadID, 4);
 	P7OUT |= (enum PORT7_FALSH_CONTROL)FLASH_CE;
         
-	if ((ucReadID [0] == 0x2C) && (ucReadID [1] == 0x01))
+	if ((ucReadID[0] == 0x4F) && (ucReadID[1] == 0x4E) && (ucReadID[2] == 0x46) && (ucReadID[3] == 0x49))
 	  result  = NAND_IO_RC_PASS;
 	else
 	  result  = NAND_IO_RC_FAIL;
@@ -335,7 +335,7 @@ uint8_t flash_init()
 static short Flash_ReadStatus(void)
 {
 	volatile int nReadStatusCount;
-	volatile unsigned char ucStatus;
+	unsigned char ucStatus;
 
 	WRITE_NAND_CLE(NAND_CMD_READ_STATUS);
 	nReadStatusCount = 0;
@@ -369,41 +369,72 @@ short flash_reset()
 	return NAND_IO_RC_PASS;
 }
 
-
-static short Flash_ProgramPage( struct FlashAddress write_address, unsigned short size_byte, unsigned char *write_buff)
+static short Flash_ProgramPageStart(struct FlashAddress structNandAddress, unsigned short a_usReadSizeByte, unsigned char *a_pucReadBuf)
 {
-	volatile short rc;
-	volatile unsigned char ucnandAddressByte;
+	unsigned char ucnandAddressByte;
 
-        // Enable Chip Select
+//	Clear_CE(); 								// Enable Chip Select
+	P7OUT &= ~(enum PORT7_FALSH_CONTROL)FLASH_CE;
+	WRITE_NAND_CLE(NAND_CMD_PAGE_PROGRAM_CYCLE1);					/* Issue 0x80 command */
+
+/* Issue Address */
+	ucnandAddressByte = (structNandAddress.usColNum) & 0xFF;
+	WRITE_NAND_ALE(ucnandAddressByte);		/* Set column address byte 0 */
+	ucnandAddressByte = (structNandAddress.usColNum >> 8) & 0x0F;
+	WRITE_NAND_ALE(ucnandAddressByte);		/* Set column address byte 1 */
+
+	ucnandAddressByte = (structNandAddress.ucPageNum ) & 0x3F;
+	ucnandAddressByte |= (unsigned char)((structNandAddress.usBlockNum  & 0x0003) << 6);
+
+	WRITE_NAND_ALE(ucnandAddressByte);		/* Set page address byte 0 */
+	ucnandAddressByte |= (unsigned char)(((structNandAddress.usBlockNum  >> 3) & 0x00FF));
+	WRITE_NAND_ALE(ucnandAddressByte);		/* Set page address byte 1 */
+	ucnandAddressByte |= (unsigned char)(((structNandAddress.usBlockNum  >> 11) & 0x0007));
+	WRITE_NAND_ALE(ucnandAddressByte);		/* Set page address byte 2 */
+
+	/* Write Data */
+
+	//WRITE_NAND_ARRAY1(a_pucReadBuf,a_usReadSizeByte );	/* Input data to NAND device */
+	Flash_MT298G08AAAWP_Nand_Write_8Bytes(  a_pucReadBuf, a_usReadSizeByte);
+
+//	Set_CE(); 			// Disable Chip Select
+	P7OUT |= (enum PORT7_FALSH_CONTROL)FLASH_CE;
+
+//		  P2OUT &= ~BIT7;		// Debug
+
+	return 0;
+}
+
+static short Flash_ProgramPage( unsigned short usColNum, unsigned short a_usReadSizeByte, unsigned char *a_pucReadBuf)
+{
+//	Clear_CE(); 								// Enable Chip Select
+	P7OUT &= ~(enum PORT7_FALSH_CONTROL)FLASH_CE;
+	/* Issue Command */
+	WRITE_NAND_CLE(NAND_CMD_RANDOM_DATA_INPUT);					/* Issue 0x85 command */
+
+	/* Issue Address */
+	WRITE_NAND_ALE((unsigned char)(usColNum & 0xFF));			/* Set column address byte 0 */
+	WRITE_NAND_ALE((unsigned char)((usColNum >> 8) & 0x0F));		/* Set column address byte 1 */
+
+//	WRITE_NAND_ARRAY1(a_pucReadBuf,a_usReadSizeByte );	/* Input data to NAND device */
+	Flash_MT298G08AAAWP_Nand_Write_8Bytes(  a_pucReadBuf, a_usReadSizeByte);
+
+//	Set_CE(); 			// Disable Chip Select
+	P7OUT |= (enum PORT7_FALSH_CONTROL)FLASH_CE;
+
+	return 0;
+}
+
+short Flash_ProgramPageLast(void)
+{
+	short rc;
+//	Clear_CE(); 								// Enable Chip Select
 	P7OUT &= ~(enum PORT7_FALSH_CONTROL)FLASH_CE;
 
-	/* Issue command */
-	WRITE_NAND_CLE(NAND_CMD_PAGE_PROGRAM_CYCLE1);					        /* Issue 0x80 command */
+	WRITE_NAND_CLE(NAND_CMD_PAGE_PROGRAM_CYCLE2);
 
-        /* Issue Address */
-	ucnandAddressByte = (write_address.usColNum) & 0xFF;
-	WRITE_NAND_ALE(ucnandAddressByte);		                                        /* Set column address byte 0 */
-	ucnandAddressByte = (write_address.usColNum >> 8) & 0x0F;
-	WRITE_NAND_ALE(ucnandAddressByte);		                                        /* Set column address byte 1 */
-          
-	ucnandAddressByte = (write_address.ucPageNum ) & 0x3F;
-	ucnandAddressByte |= (unsigned char)((write_address.usBlockNum  & 0x0003) << 6);
-
-	WRITE_NAND_ALE(ucnandAddressByte);		                                        /* Set page address byte 0 */ 
-	ucnandAddressByte |= (unsigned char)(((write_address.usBlockNum  >> 3) & 0x00FF));
-	WRITE_NAND_ALE(ucnandAddressByte);		                                        /* Set page address byte 1 */
-	ucnandAddressByte |= (unsigned char)(((write_address.usBlockNum  >> 11) & 0x0007));
-	WRITE_NAND_ALE(ucnandAddressByte);		                                        /* Set page address byte 2 */
-
-        /* Issue Command */
-	WRITE_NAND_ARRAY(write_buff,size_byte);				                        /* Input data to NAND device */	
-
-	WRITE_NAND_CLE(NAND_CMD_PAGE_PROGRAM_CYCLE2);					        /* Issue 0x10 command */
-
-	rc = Flash_ReadStatus();								        /* Wait for status */                                        
-
-        // Disable Chip Select
+	rc = Flash_ReadStatus();
+//	Set_CE(); 			// Disable Chip Select
 	P7OUT |= (enum PORT7_FALSH_CONTROL)FLASH_CE;
 
 	return rc;
@@ -411,85 +442,120 @@ static short Flash_ProgramPage( struct FlashAddress write_address, unsigned shor
 
 void send_data_to_flash(unsigned char *data_frame)
 {
-	Flash_ProgramPage(Write_Flash_Address,8,data_frame);
-	Write_Flash_Address.usColNum +=8;
-	
-	if (Write_Flash_Address.usColNum == PAGE_SIZE)
-	{
-		  Write_Flash_Address.usColNum=0;
-		  Write_Flash_Address.ucPageNum++;
-		  if (Write_Flash_Address.ucPageNum == PAGES_PER_BLOCK)
-		  {
-			  Write_Flash_Address.ucPageNum = 0;
-			  Write_Flash_Address.usBlockNum++;
-			  if (Write_Flash_Address.usBlockNum == MAX_BLOCKS)
-			  {
-					  Write_Flash_Address.usBlockNum = MAX_BLOCKS-1;
-					  Write_Flash_Address.ucPageNum = PAGES_PER_BLOCK-1;
-			  }
-		  }
+	if (Write_Flash_Address.usColNum == 0) {
+		Flash_ProgramPageStart(Write_Flash_Address,64,data_frame);
+	}
+	else {
+		Flash_ProgramPage(Write_Flash_Address.usColNum,64,data_frame);
+	}
+
+	Write_Flash_Address.usColNum +=64;
+
+	if (Write_Flash_Address.usColNum == PAGE_SIZE) {
+		Write_Flash_Address.usColNum=0;
+		Write_Flash_Address.ucPageNum++;
+
+		if (Write_Flash_Address.ucPageNum == PAGES_PER_BLOCK) {
+			Write_Flash_Address.ucPageNum = 0;
+			Write_Flash_Address.usBlockNum++;
+
+			if (Write_Flash_Address.usBlockNum == MAX_BLOCKS) {
+				Write_Flash_Address.usBlockNum = MAX_BLOCKS-1;
+				Write_Flash_Address.ucPageNum = PAGES_PER_BLOCK-1;
+			}
+		}
+
+		Flash_ProgramPageLast();
       }
 }
 
-static short Flash_ReadPage( struct FlashAddress write_address, unsigned short size_byte, unsigned char *read_buff)
+short Flash_ReadPageStart( struct FlashAddress structNandAddress, unsigned short a_usReadSizeByte, unsigned char *a_pucReadBuf)
 {
-	volatile short rc;
-	volatile unsigned char ucnandAddressByte;
-        // Enable Chip Select
+	short rc;
+//	int i;
+	unsigned char ucnandAddressByte;
+
+//	Clear_CE(); 								// Enable Chip Select
 	P7OUT &= ~(enum PORT7_FALSH_CONTROL)FLASH_CE;
 
-        /* Issue command */
-	WRITE_NAND_CLE(NAND_CMD_PAGE_READ_CYCLE1);					        /* Issue page read command cycle 1 */
+/* Issue command */
+	WRITE_NAND_CLE(NAND_CMD_PAGE_READ_CYCLE1);					/* Issue page read command cycle 1 */
 
-        /* Issue Address */
-	ucnandAddressByte = (write_address.usColNum) & 0xFF;
-	WRITE_NAND_ALE(ucnandAddressByte);		                                        /* Set column address byte 0 */
-	ucnandAddressByte = (write_address.usColNum >> 8) & 0x0F;
-	WRITE_NAND_ALE(ucnandAddressByte);		                                        /* Set column address byte 1 */
+/* Issue Address */
+	ucnandAddressByte = (structNandAddress.usColNum) & 0xFF;
+	WRITE_NAND_ALE(ucnandAddressByte);		/* Set column address byte 0 */
+	ucnandAddressByte = (structNandAddress.usColNum >> 8) & 0x0F;
+	WRITE_NAND_ALE(ucnandAddressByte);		/* Set column address byte 1 */
 	
-	ucnandAddressByte = (write_address.ucPageNum ) & 0x3F;
-	ucnandAddressByte |= (unsigned char)((write_address.usBlockNum  & 0x0003) << 6);
+	ucnandAddressByte = (structNandAddress.ucPageNum ) & 0x3F;
+	ucnandAddressByte |= (unsigned char)((structNandAddress.usBlockNum  & 0x0003) << 6);
 
-	WRITE_NAND_ALE(ucnandAddressByte);		                                        /* Set page address byte 0 */ 
-	ucnandAddressByte |= (unsigned char)(((write_address.usBlockNum  >> 3) & 0x00FF));
-	WRITE_NAND_ALE(ucnandAddressByte);		                                        /* Set page address byte 1 */
-	ucnandAddressByte |= (unsigned char)(((write_address.usBlockNum  >> 11) & 0x0007));
-	WRITE_NAND_ALE(ucnandAddressByte);		                                        /* Set page address byte 2 */
+	WRITE_NAND_ALE(ucnandAddressByte);		/* Set page address byte 0 */
+	ucnandAddressByte |= (unsigned char)(((structNandAddress.usBlockNum  >> 3) & 0x00FF));
+	WRITE_NAND_ALE(ucnandAddressByte);		/* Set page address byte 1 */
+	ucnandAddressByte |= (unsigned char)(((structNandAddress.usBlockNum  >> 11) & 0x0007));
+	WRITE_NAND_ALE(ucnandAddressByte);		/* Set page address byte 2 */
 
-        /* Issue command */
+/* Issue command */
 	WRITE_NAND_CLE(NAND_CMD_PAGE_READ_CYCLE2);
 
-	rc = Flash_ReadStatus();										                                      
+	rc = Flash_ReadStatus();						/* Wait for ready status */
+
 	if(rc != NAND_IO_RC_PASS)
 		return rc;
 
-	/* Issue Command - Set device to read from data register. */
-	WRITE_NAND_CLE(NAND_CMD_PAGE_READ_CYCLE1);					
+	WRITE_NAND_CLE(NAND_CMD_PAGE_READ_CYCLE1);		/* Set device to read data mode by issuing a page read command */
 
-	READ_NAND_ARRAY(read_buff, size_byte);
 
-        // Disable Chip Select
-	P7OUT |= (enum PORT7_FALSH_CONTROL)FLASH_CE;
+	READ_NAND_ARRAY(a_pucReadBuf, a_usReadSizeByte);
 
 	return rc;
 }
 
+short Flash_ReadPage(unsigned short a_usColNum, unsigned short a_usReadSizeByte, unsigned char *a_pucReadBuf)
+{
+//	unsigned int i;
+//	Clear_CE(); 								// Enable Chip Select
+	P7OUT &= ~(enum PORT7_FALSH_CONTROL)FLASH_CE;
+
+/* Issue command */
+	WRITE_NAND_CLE(NAND_CMD_RANDOM_DATA_READ_CYCLE1);		/* Issue 0x05 command. */
+
+/* Issue Column Address */
+	WRITE_NAND_ALE((unsigned char)(a_usColNum & 0xFF));
+	WRITE_NAND_ALE((unsigned char)((a_usColNum >> 8) & 0x0F));	/* Set column address byte 1 */
+
+/* Issue command */
+	WRITE_NAND_CLE(NAND_CMD_RANDOM_DATA_READ_CYCLE2);		/* Issue 0xE0 command. */
+
+	READ_NAND_ARRAY(a_pucReadBuf, a_usReadSizeByte);
+
+//	Set_CE(); 			// Disable Chip Select
+	P7OUT |= (enum PORT7_FALSH_CONTROL)FLASH_CE;
+	return 0;
+}
+
 short read_data_from_flash(unsigned char *data_frame)
-{							
-	  Flash_ReadPage(Read_Flash_Address,8,data_frame);
-	  Read_Flash_Address.usColNum += 8;
-	  if ( Read_Flash_Address.usColNum == PAGE_SIZE)
-	  {
-		  Read_Flash_Address.usColNum = 0;
-		  Read_Flash_Address.ucPageNum++;
-		  if (Read_Flash_Address.ucPageNum == PAGES_PER_BLOCK)
-		  {
-			  Read_Flash_Address.ucPageNum =0;
-			  Read_Flash_Address.usBlockNum++;
-			  if (Read_Flash_Address.usBlockNum == MAX_BLOCKS)
-			  {
-				 return NAND_MEMORY_END;
-			  }
+{
+	if(Read_Flash_Address.usColNum == 0){
+		Flash_ReadPageStart(Read_Flash_Address,64,data_frame);
+	}
+	else {
+		Flash_ReadPage(Read_Flash_Address.usColNum,64,data_frame);
+	}
+
+	Read_Flash_Address.usColNum += 64;
+	if ( Read_Flash_Address.usColNum == PAGE_SIZE) {
+		Read_Flash_Address.usColNum = 0;
+		Read_Flash_Address.ucPageNum++;
+
+		if (Read_Flash_Address.ucPageNum == PAGES_PER_BLOCK) {
+			Read_Flash_Address.ucPageNum =0;
+			Read_Flash_Address.usBlockNum++;
+
+			if (Read_Flash_Address.usBlockNum == MAX_BLOCKS) {
+				return NAND_MEMORY_END;
+			 }
 		  }
 	  }
 	  return NAND_IO_RC_PASS;

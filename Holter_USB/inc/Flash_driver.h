@@ -122,7 +122,7 @@ void Flash_MT298G08AAAWP_Nand_Write_8Bytes(void *a_pBuf, unsigned short a_usLen)
 
 #define MAX_READ_STATUS_COUNT 				100000
     
-#define PAGE_SIZE				        	2112*4
+#define PAGE_SIZE				        	2112
 #define PAGES_PER_BLOCK			            64
 #define MAX_BLOCKS				        	4096
 
@@ -141,6 +141,7 @@ uint8_t flash_init();
 short flash_reset();
 
 void send_data_to_flash(unsigned char *data_frame);
+short Flash_ProgramPageLast(void);
 short read_data_from_flash(unsigned char *data_frame);
 void erase_flash();
 

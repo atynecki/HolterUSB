@@ -47,7 +47,6 @@ void conversion_start ()
 	send_state();
 	enable_ADS1x9x_Conversion ();
 	packet_tail = 4;
-	app_get_flags()->stream_enable = true;
 	GPIO_setOutputHighOnPin(GPIO_PORT_P5,GPIO_PIN0);
 }
 
@@ -57,6 +56,8 @@ void conversion_stop ()
 	send_state();
 	disable_ADS1x9x_Conversion();
 	GPIO_setOutputLowOnPin(GPIO_PORT_P5,GPIO_PIN0);
+
+	_low_power_mode_0();
 }
 
 void put_data_to_packet(uint8_t *data)
@@ -97,7 +98,7 @@ void set_exam_stop_time ()
 static void create_send_frame (uint8_t* frame)
 {
 	int i = 3;
-
+	frame[0] = DATA_FRAME_FLAG;
 	for(i = 3; i<PACKET_SEND_FRAME_LENGTH; i++){
 		data_send_frame[i] = frame[i-3];
 	}
@@ -158,21 +159,23 @@ static void send_transfer_end_frame ()
 
 static bool read_flash_data ()
 {
-	uint8_t i;
-	volatile uint32_t sum = 0;
+	//uint8_t i;
+	//volatile uint32_t sum = 0;
 
 	read_data_from_flash(packet_frame);
 
-	for(i = 0; i < PACKET_FRAME_LENGTH; i++){
-		sum+= packet_frame[i];
-	}
+	//for(i = 0; i < PACKET_FRAME_LENGTH; i++){
+		//sum+= packet_frame[i];
+	//}
 
-	if(sum != (PACKET_FRAME_LENGTH * 0xFF)){
-		return true;
-	}
-	else {
-		return false;
-	}
+	//if(sum != (PACKET_FRAME_LENGTH * 0xFF)){
+		//return true;
+	//}
+	//else {
+		//return false;
+	//}
+
+	return compare_address();
 }
 
 void transfer_data ()
@@ -186,6 +189,7 @@ void transfer_data ()
 	while(read_flash_data()) {
 		create_send_frame(packet_frame);
 		cdcSendDataInBackground(data_send_frame, PACKET_SEND_FRAME_LENGTH, CDC0_INTFNUM, 1000);
+		DELAY_10MS();
 	}
 
 	send_transfer_end_frame();
@@ -238,5 +242,5 @@ void parse_command (uint8_t* data_buff)
 
 void power_manage ()
 {
-
+	__bis_SR_register(LPM4_bits + GIE);
 }
