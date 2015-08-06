@@ -7,7 +7,6 @@ uint16_t switch_counter;
 uint8_t dummy_read;
 uint8_t spi_rx_count=0;
 uint8_t spi_rx_buf[9];
-extern uint8_t packet_frame[PACKET_FRAME_LENGTH];
 
 #pragma vector=PORT1_VECTOR
 __interrupt void Port_1(void)
@@ -74,9 +73,7 @@ __interrupt void RTC_A_ISR(void)
     case 0: break;      //No interrupts
     case 2: break;      //RTCRDYIFG
     case 4:             //RTCEVIFG
-    	actualTime = RTC_A_getCalendarTime(RTC_A_BASE);
-    	packet_frame[2] = (uint8_t)(actualTime.Hours);
-    	packet_frame[3] = (uint8_t)(actualTime.Minutes);
+    	app_get_data()->actual_time = RTC_A_getCalendarTime(RTC_A_BASE);
         break;
     case 6: break;      //RTCAIFG
     case 8: break;      //RT0PSIFG

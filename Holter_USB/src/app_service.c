@@ -44,20 +44,39 @@ void general_flag_clear ()
 void conversion_start ()
 {
 	app_get_flags()->device_run = true;
-	send_state();
+
+	if(app_get_flags()->backup_enable == true)
+		GPIO_setOutputHighOnPin(GPIO_PORT_P5,GPIO_PIN1);
+
+	else {
+		GPIO_setOutputHighOnPin(GPIO_PORT_P5,GPIO_PIN0);
+		DELAY_200MS();
+		GPIO_setOutputLowOnPin(GPIO_PORT_P5,GPIO_PIN0);
+		DELAY_200MS();
+		GPIO_setOutputHighOnPin(GPIO_PORT_P5,GPIO_PIN0);
+		DELAY_200MS();
+		GPIO_setOutputLowOnPin(GPIO_PORT_P5,GPIO_PIN0);
+	}
+
 	enable_ADS1x9x_Conversion ();
 	packet_tail = 4;
-	GPIO_setOutputHighOnPin(GPIO_PORT_P5,GPIO_PIN0);
+	send_state();
 }
 
 void conversion_stop ()
 {
 	app_get_flags()->device_run = false;
-	send_state();
 	disable_ADS1x9x_Conversion();
-	GPIO_setOutputLowOnPin(GPIO_PORT_P5,GPIO_PIN0);
 
-	_low_power_mode_0();
+	if(app_get_flags()->backup_enable == true)
+		GPIO_setOutputLowOnPin(GPIO_PORT_P5,GPIO_PIN1);
+	else {
+		GPIO_setOutputHighOnPin(GPIO_PORT_P5,GPIO_PIN0);
+		DELAY_200MS();
+		GPIO_setOutputLowOnPin(GPIO_PORT_P5,GPIO_PIN0);
+	}
+
+	send_state();
 }
 
 void put_data_to_packet(uint8_t *data)
@@ -121,25 +140,29 @@ void send_state ()
 {
 	state_send_frame[3] = STATE_FRAME_FLAG;
 
+	Calendar time = RTC_A_getCalendarTime(RTC_A_BASE);
+
 	state_send_frame[4] = app_get_flags()->stream_enable;
 	state_send_frame[5] = app_get_flags()->device_run;
 	state_send_frame[6] = app_get_flags()->backup_enable;
 	state_send_frame[7] = app_get_flags()->device_error;
 
+	state_send_frame[8] = time.DayOfMonth;
+	state_send_frame[9] = time.Month;
+	state_send_frame[10] = (uint8_t)(time.Year >> 8);
+	state_send_frame[11] = (uint8_t)(time.Year);
+
+	state_send_frame[12] = time.Hours;
+	state_send_frame[13] = time.Minutes;
+	state_send_frame[14] = time.Seconds;
+
 	cdcSendDataInBackground(state_send_frame, STATE_FRAME_LENGTH, CDC0_INTFNUM, 1000);
-}
-
-void send_header_frame ()
-{
-	time_data = RTC_A_getCalendarTime(RTC_A_BASE);
-
-	create_time_frame(HEADER_FRAME_FLAG, time_data);
-
-	cdcSendDataInBackground(time_send_frame, TIME_SEND_FRAME_LENGTH, CDC0_INTFNUM, 1000);
 }
 
 void send_data_packet ()
 {
+	packet_frame[2] = app_get_data()->actual_time.Hours;
+	packet_frame[3] = app_get_data()->actual_time.Minutes;
 	if(app_get_flags()->backup_enable == true)
 		send_data_to_flash(packet_frame);
 	if (app_get_flags()->stream_enable == true){
@@ -159,21 +182,7 @@ static void send_transfer_end_frame ()
 
 static bool read_flash_data ()
 {
-	//uint8_t i;
-	//volatile uint32_t sum = 0;
-
 	read_data_from_flash(packet_frame);
-
-	//for(i = 0; i < PACKET_FRAME_LENGTH; i++){
-		//sum+= packet_frame[i];
-	//}
-
-	//if(sum != (PACKET_FRAME_LENGTH * 0xFF)){
-		//return true;
-	//}
-	//else {
-		//return false;
-	//}
 
 	return compare_address();
 }
@@ -223,15 +232,15 @@ void parse_command (uint8_t* data_buff)
 		}
 
 		else if(data_buff[2] == TIME_RECEIVED_COMMAND){
-			time_data.Seconds = data_buff[3];
-			time_data.Minutes = data_buff[4];
-			time_data.Hours = data_buff[5];
-			time_data.DayOfMonth = data_buff[6];
-			time_data.Month = data_buff[7];
+			app_get_data()->actual_time.Seconds = data_buff[3];
+			app_get_data()->actual_time.Minutes = data_buff[4];
+			app_get_data()->actual_time.Hours = data_buff[5];
+			app_get_data()->actual_time.DayOfMonth = data_buff[6];
+			app_get_data()->actual_time.Month = data_buff[7];
 			int year = (((uint16_t)(data_buff[8])) << 8) | ((uint16_t)(data_buff[9]));
-			time_data.Year = year;
+			app_get_data()->actual_time.Year = year;
 
-			set_calender_time(time_data);
+			set_calender_time();
 		}
 
 		else if(data_buff[2] == GET_STATE_COMMAND){

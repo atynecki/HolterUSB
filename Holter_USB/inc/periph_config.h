@@ -14,8 +14,8 @@
 #include "USB_API/USB_CDC_API/UsbCdc.h"
 #include "USB_app/usbConstructs.h"
 
-void initClocks(uint32_t mclkFreq);
-void set_calender_time(Calendar time);
+void initClocks();
+void set_calender_time();
 void peripherial_init(void);
 void visualization(void);
 

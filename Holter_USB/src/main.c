@@ -8,7 +8,7 @@ void main ()
     // Minimum Vcore setting required for the USB API is PMM_CORE_LEVEL_3
     PMM_setVCore(PMM_CORE_LEVEL_3);
 
-    initClocks(USB_MCLK_FREQ);
+    initClocks();
 
     general_flag_clear();
 
@@ -32,7 +32,6 @@ void main ()
     		GPIO_setOutputHighOnPin(GPIO_PORT_P5,GPIO_PIN1);
 			DELAY_1S();
 			GPIO_setOutputLowOnPin(GPIO_PORT_P5,GPIO_PIN1);
-			send_header_frame();
 			send_state();
     	}
 
@@ -53,7 +52,13 @@ void main ()
 
 			set_exam_start_time();
 
-			GPIO_setOutputHighOnPin(GPIO_PORT_P5,GPIO_PIN1);
+			if(app_get_flags()->device_run == true)
+				GPIO_setOutputHighOnPin(GPIO_PORT_P5,GPIO_PIN1);
+			else {
+				GPIO_setOutputHighOnPin(GPIO_PORT_P5,GPIO_PIN1);
+				DELAY_1S();
+				GPIO_setOutputLowOnPin(GPIO_PORT_P5,GPIO_PIN1);
+			}
 			send_state();
     	}
 
@@ -62,10 +67,15 @@ void main ()
 			app_get_flags()->backup_enable = false;
 
 			Flash_ProgramPageLast();
-			copy_write_address(&app_get_data()->tail_address);
 			set_exam_stop_time();
 
-			GPIO_setOutputLowOnPin(GPIO_PORT_P5,GPIO_PIN1);
+			if(app_get_flags()->device_run == true)
+				GPIO_setOutputLowOnPin(GPIO_PORT_P5,GPIO_PIN1);
+			else {
+				GPIO_setOutputHighOnPin(GPIO_PORT_P5,GPIO_PIN1);
+				DELAY_1S();
+				GPIO_setOutputLowOnPin(GPIO_PORT_P5,GPIO_PIN1);
+			}
 			send_state();
 		}
 

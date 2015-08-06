@@ -28,23 +28,23 @@ typedef enum{
 } device_error_flags;
 
 typedef struct{
+	struct Calendar actual_time;
 	struct Calendar exam_start;
 	struct Calendar exam_end;
-	struct FlashAddress tail_address;
 } app_data_t, *app_data_p;
 
 typedef struct {
 	bool packet_data_ready;
 	bool data_transfer;
-  bool stream_enable;
-  bool stream_start;
-  bool stream_stop;
-  bool backup_enable;
-  bool backup_start;
-  bool backup_stop;
-  bool erase_flash;
-  bool device_run;
-  uint8_t device_error;
+	bool stream_enable;
+	bool stream_start;
+	bool stream_stop;
+	bool backup_enable;
+	bool backup_start;
+	bool backup_stop;
+	bool erase_flash;
+	bool device_run;
+	uint8_t device_error;
 } general_flags_t, *general_flags_p;
 
 app_data_p app_get_data(void);
@@ -61,7 +61,6 @@ void set_exam_start_time(void);
 void set_exam_stop_time(void);
 
 void send_state(void);
-void send_header_frame(void);
 void send_data_packet(void);
 
 void transfer_data(void);

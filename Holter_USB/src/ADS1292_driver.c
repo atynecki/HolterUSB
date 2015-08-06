@@ -508,6 +508,8 @@ uint8_t ADS1x9x_Init(void)
    Init_ADS1x9x_DRDY_Interrupt();
    Disable_ADS1x9x_DRDY_Interrupt();
    
+   Put_ADS1x9x_In_Sleep();
+
    return 0;
 }
 
@@ -516,6 +518,8 @@ uint8_t ADS1x9x_Init(void)
 **********************************************************************************************************/
 void enable_ADS1x9x_Conversion (void)
   {
+	Wake_Up_ADS1x9x();
+
     Soft_Start_ADS1x9x();
     Start_Read_Data_Continuous ();		//RDATAC command
     Enable_ADS1x9x_DRDY_Interrupt();
@@ -528,8 +532,10 @@ void enable_ADS1x9x_Conversion (void)
 void disable_ADS1x9x_Conversion (void)
   {
     Stop_Read_Data_Continuous();                //SDATAC command
-    Soft_Start_ADS1x9x();
+    Soft_Stop_ADS1x9x();
     Disable_ADS1x9x_DRDY_Interrupt();
+
+    Put_ADS1x9x_In_Sleep();
   }
 /*********************************************************************************************************/
 
