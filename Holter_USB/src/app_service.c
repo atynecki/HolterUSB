@@ -7,10 +7,13 @@ general_flags_t flags;
 
 Calendar time_data;
 
+struct FlashAddress Write_Flash_Address;
+struct FlashAddress Read_Flash_Address;
+
 uint8_t packet_tail;
+uint8_t header_frame[PACKET_FRAME_LENGTH] = {0xA5, 0x5A, 0xFE};
 uint8_t packet_frame[PACKET_FRAME_LENGTH] = {0,0,0,0};
 uint8_t data_send_frame[PACKET_SEND_FRAME_LENGTH] = {0xA5, 0x5A, 0xFE};
-uint8_t time_send_frame[TIME_SEND_FRAME_LENGTH] = {0xA5, 0x5A, 0xFE};
 uint8_t state_send_frame[STATE_FRAME_LENGTH] = {0xA5, 0x5A, 0xFE};
 
 app_data_p app_get_data ()
@@ -36,6 +39,7 @@ void general_flag_clear ()
 	app_get_flags()->backup_enable = false;
 	app_get_flags()->backup_stop = false;
 	app_get_flags()->data_transfer = false;
+	app_get_flags()->data_send_next = false;
 	app_get_flags()->erase_flash = false;
 
 	app_get_flags()->device_error = 0;
@@ -45,9 +49,10 @@ void conversion_start ()
 {
 	app_get_flags()->device_run = true;
 
-	if(app_get_flags()->backup_enable == true)
+	if(app_get_flags()->backup_enable == true){
+		set_exam_start_time();
 		GPIO_setOutputHighOnPin(GPIO_PORT_P5,GPIO_PIN1);
-
+	}
 	else {
 		GPIO_setOutputHighOnPin(GPIO_PORT_P5,GPIO_PIN0);
 		DELAY_200MS();
@@ -68,8 +73,10 @@ void conversion_stop ()
 	app_get_flags()->device_run = false;
 	disable_ADS1x9x_Conversion();
 
-	if(app_get_flags()->backup_enable == true)
+	if(app_get_flags()->backup_enable == true){
+		set_exam_stop_time();
 		GPIO_setOutputLowOnPin(GPIO_PORT_P5,GPIO_PIN1);
+	}
 	else {
 		GPIO_setOutputHighOnPin(GPIO_PORT_P5,GPIO_PIN0);
 		DELAY_200MS();
@@ -77,6 +84,95 @@ void conversion_stop ()
 	}
 
 	send_state();
+}
+
+void clear_write_address()
+{
+    Write_Flash_Address.ucPageNum = 0;
+    Write_Flash_Address.usBlockNum = 0;
+    Write_Flash_Address.usColNum = 0;
+}
+
+void clear_read_address()
+{
+    Read_Flash_Address.ucPageNum = 0;
+    Read_Flash_Address.usBlockNum = 0;
+    Read_Flash_Address.usColNum = 0;
+}
+
+bool compare_address()
+{
+  if(Read_Flash_Address.usBlockNum < Write_Flash_Address.usBlockNum)
+    return true;
+  else if (Read_Flash_Address.usBlockNum == Write_Flash_Address.usBlockNum){
+    if(Read_Flash_Address.ucPageNum < Write_Flash_Address.ucPageNum)
+      return true;
+    else if (Read_Flash_Address.ucPageNum == Write_Flash_Address.ucPageNum){
+      if(Read_Flash_Address.usColNum < Write_Flash_Address.usColNum)
+         return true;
+      else
+        return false;
+    }
+    else
+      return false;
+  }
+  else
+    return false;
+}
+
+void send_data_to_flash(unsigned char *data_frame)
+{
+	if (Write_Flash_Address.usColNum == 0) {
+		flash_program_page_start(Write_Flash_Address,64,data_frame);
+	}
+	else {
+		flash_program_page_next(Write_Flash_Address.usColNum,64,data_frame);
+	}
+
+	Write_Flash_Address.usColNum +=64;
+
+	if (Write_Flash_Address.usColNum == PAGE_SIZE) {
+		Write_Flash_Address.usColNum=0;
+		Write_Flash_Address.ucPageNum++;
+
+		if (Write_Flash_Address.ucPageNum == PAGES_PER_BLOCK) {
+			Write_Flash_Address.ucPageNum = 0;
+			Write_Flash_Address.usBlockNum++;
+
+			if (Write_Flash_Address.usBlockNum == MAX_BLOCKS) {
+				Write_Flash_Address.usBlockNum = MAX_BLOCKS-1;
+				Write_Flash_Address.ucPageNum = PAGES_PER_BLOCK-1;
+			}
+		}
+
+		flash_program_page_last();
+      }
+}
+
+short read_data_from_flash(unsigned char *data_frame)
+{
+	if(Read_Flash_Address.usColNum == 0){
+		flash_read_page_start(Read_Flash_Address,64,data_frame);
+	}
+	else {
+		flash_read_page_next(Read_Flash_Address.usColNum,64,data_frame);
+	}
+
+	Read_Flash_Address.usColNum += 64;
+	if ( Read_Flash_Address.usColNum == PAGE_SIZE) {
+		Read_Flash_Address.usColNum = 0;
+		Read_Flash_Address.ucPageNum++;
+
+		if (Read_Flash_Address.ucPageNum == PAGES_PER_BLOCK) {
+			Read_Flash_Address.ucPageNum =0;
+			Read_Flash_Address.usBlockNum++;
+
+			if (Read_Flash_Address.usBlockNum == MAX_BLOCKS) {
+				return NAND_MEMORY_END;
+			 }
+		  }
+	}
+	return NAND_IO_RC_PASS;
 }
 
 void put_data_to_packet(uint8_t *data)
@@ -90,28 +186,52 @@ void put_data_to_packet(uint8_t *data)
 	}
 }
 
+static void clean_header_frame()
+{
+	int i;
+	for(i=3; i<PACKET_FRAME_LENGTH; i++)
+		header_frame[i] = 0xFF;
+}
 void set_exam_start_time ()
 {
-	time_data = RTC_A_getCalendarTime(RTC_A_BASE);
-	app_get_data()->exam_start.Seconds = time_data.Seconds;
-	app_get_data()->exam_start.Minutes = time_data.Minutes;
-	app_get_data()->exam_start.Hours = time_data.Hours;
+	clean_header_frame();
 
-	app_get_data()->exam_start.DayOfMonth = time_data.DayOfMonth;
-	app_get_data()->exam_start.Month = time_data.Month;
-	app_get_data()->exam_start.Year = time_data.Year;
+	time_data = RTC_A_getCalendarTime(RTC_A_BASE);
+
+	header_frame[3] = HEADER_TIME_FLAG;
+	header_frame[4] = time_data.DayOfMonth;
+	header_frame[5] = time_data.Month;
+	header_frame[6] = (uint8_t)(time_data.Year >> 8);
+	header_frame[7] = (uint8_t)(time_data.Year);
+
+	header_frame[8] = time_data.Hours;
+	header_frame[9] = time_data.Minutes;
+	header_frame[10] = time_data.Seconds;
+
+	send_data_to_flash(header_frame);
 }
 
 void set_exam_stop_time ()
 {
 	time_data = RTC_A_getCalendarTime(RTC_A_BASE);
-	app_get_data()->exam_end.Seconds = time_data.Seconds;
-	app_get_data()->exam_end.Minutes = time_data.Minutes;
-	app_get_data()->exam_end.Hours = time_data.Hours;
 
-	app_get_data()->exam_end.DayOfMonth = time_data.DayOfMonth;
-	app_get_data()->exam_end.Month = time_data.Month;
-	app_get_data()->exam_end.Year = time_data.Year;
+	struct FlashAddress tmp_addres;
+	tmp_addres.usColNum = 0;
+	tmp_addres.ucPageNum = 0;
+	tmp_addres.usBlockNum = 0;
+
+	flash_read_page(tmp_addres,64,header_frame);
+
+	header_frame[11] = time_data.DayOfMonth;
+	header_frame[12] = time_data.Month;
+	header_frame[13] = (uint8_t)(time_data.Year >> 8);
+	header_frame[14] = (uint8_t)(time_data.Year);
+
+	header_frame[15] = time_data.Hours;
+	header_frame[16] = time_data.Minutes;
+	header_frame[17] = time_data.Seconds;
+
+	flash_program_page(tmp_addres,64,header_frame);
 }
 
 static void create_send_frame (uint8_t* frame)
@@ -121,19 +241,6 @@ static void create_send_frame (uint8_t* frame)
 	for(i = 3; i<PACKET_SEND_FRAME_LENGTH; i++){
 		data_send_frame[i] = frame[i-3];
 	}
-}
-
-static void create_time_frame (uint8_t index, struct Calendar time)
-{
-	time_send_frame[3] = index;
-	time_send_frame[4] = time.DayOfMonth;
-	time_send_frame[5] = time.Month;
-	time_send_frame[6] = (uint8_t)(time.Year >> 8);
-	time_send_frame[7] = (uint8_t)(time.Year);
-
-	time_send_frame[8] = time.Hours;
-	time_send_frame[9] = time.Minutes;
-	time_send_frame[10] = time.Seconds;
 }
 
 void send_state ()
@@ -170,6 +277,7 @@ void send_data_packet ()
 		cdcSendDataInBackground(data_send_frame, PACKET_SEND_FRAME_LENGTH, CDC0_INTFNUM, 1000);
 	}
 }
+
 static void send_transfer_end_frame ()
 {
 	int i;
@@ -187,18 +295,25 @@ static bool read_flash_data ()
 	return compare_address();
 }
 
+uint8_t data_transfer_timeout;
 void transfer_data ()
 {
-	create_time_frame(START_TIME_FLAG, app_get_data()->exam_start);
-	cdcSendDataInBackground(time_send_frame, TIME_SEND_FRAME_LENGTH, CDC0_INTFNUM, 1000);
+	read_data_from_flash(header_frame);
+	cdcSendDataInBackground(header_frame, PACKET_FRAME_LENGTH, CDC0_INTFNUM, 1000);
+	DELAY_10MS();
 
-	create_time_frame(STOP_TIME_FLAG, app_get_data()->exam_end);
-	cdcSendDataInBackground(time_send_frame, TIME_SEND_FRAME_LENGTH, CDC0_INTFNUM, 1000);
-
+	data_transfer_timeout = 0;
 	while(read_flash_data()) {
 		create_send_frame(packet_frame);
+		app_get_flags()->data_send_next = false;
 		cdcSendDataInBackground(data_send_frame, PACKET_SEND_FRAME_LENGTH, CDC0_INTFNUM, 1000);
-		DELAY_10MS();
+		while(!app_get_flags()->data_send_next){
+			data_transfer_timeout++;
+			if(data_transfer_timeout == 80000){
+				data_transfer_timeout = 0;
+				cdcSendDataInBackground(data_send_frame, PACKET_SEND_FRAME_LENGTH, CDC0_INTFNUM, 1000);
+			}
+		}
 	}
 
 	send_transfer_end_frame();
@@ -241,10 +356,15 @@ void parse_command (uint8_t* data_buff)
 			app_get_data()->actual_time.Year = year;
 
 			set_calender_time();
+			send_state();
 		}
 
 		else if(data_buff[2] == GET_STATE_COMMAND){
 			send_state();
+		}
+
+		else if(data_buff[2] == SEND_NEXT_COMMAND){
+			app_get_flags()->data_send_next = true;
 		}
 	}
 }

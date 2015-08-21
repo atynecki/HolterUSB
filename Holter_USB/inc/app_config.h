@@ -22,8 +22,7 @@
 
 #define DATA_FRAME_FLAG				0
 #define STATE_FRAME_FLAG			1
-#define START_TIME_FLAG				2
-#define STOP_TIME_FLAG				3
-#define TRANSFER_END_FLAG			4
+#define HEADER_TIME_FLAG			2
+#define TRANSFER_END_FLAG			3
 
 #endif

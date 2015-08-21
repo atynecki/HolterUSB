@@ -13,6 +13,7 @@
 #define ERASE_FLASH_COMMAND			4
 #define TIME_RECEIVED_COMMAND		5
 #define GET_STATE_COMMAND			6
+#define SEND_NEXT_COMMAND			7
 
 /* Results of data transfer function */
 typedef enum {
@@ -29,13 +30,14 @@ typedef enum{
 
 typedef struct{
 	struct Calendar actual_time;
-	struct Calendar exam_start;
-	struct Calendar exam_end;
+	//struct Calendar exam_start;
+	//struct Calendar exam_end;
 } app_data_t, *app_data_p;
 
 typedef struct {
 	bool packet_data_ready;
 	bool data_transfer;
+	bool data_send_next;
 	bool stream_enable;
 	bool stream_start;
 	bool stream_stop;
@@ -54,6 +56,11 @@ void general_flag_clear(void);
 
 void conversion_start(void);
 void conversion_stop(void);
+
+void clear_write_address(void);
+void clear_read_address(void);
+void send_data_to_flash(unsigned char *data_frame);
+short read_data_from_flash(unsigned char *data_frame);
 
 void put_data_to_packet(uint8_t *data);
 

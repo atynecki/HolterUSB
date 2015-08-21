@@ -14,8 +14,8 @@
 #include "USB_API/USB_CDC_API/UsbCdc.h"
 #include "USB_app/usbConstructs.h"
 
-void initClocks();
-void set_calender_time();
+void initClocks(void);
+void set_calender_time(void);
 void peripherial_init(void);
 void visualization(void);
 

@@ -50,10 +50,10 @@ void main ()
 
     		clear_write_address();
 
-			set_exam_start_time();
-
-			if(app_get_flags()->device_run == true)
+			if(app_get_flags()->device_run == true){
+				set_exam_start_time();
 				GPIO_setOutputHighOnPin(GPIO_PORT_P5,GPIO_PIN1);
+			}
 			else {
 				GPIO_setOutputHighOnPin(GPIO_PORT_P5,GPIO_PIN1);
 				DELAY_1S();
@@ -66,11 +66,12 @@ void main ()
 			app_get_flags()->backup_stop = false;
 			app_get_flags()->backup_enable = false;
 
-			Flash_ProgramPageLast();
-			set_exam_stop_time();
+			flash_program_page_last();
 
-			if(app_get_flags()->device_run == true)
+			if(app_get_flags()->device_run == true){
+				set_exam_stop_time();
 				GPIO_setOutputLowOnPin(GPIO_PORT_P5,GPIO_PIN1);
+			}
 			else {
 				GPIO_setOutputHighOnPin(GPIO_PORT_P5,GPIO_PIN1);
 				DELAY_1S();

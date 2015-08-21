@@ -71,18 +71,18 @@ void Flash_MT298G08AAAWP_Nand_Write_8Bytes(void *a_pBuf, unsigned short a_usLen)
 /*----------------------*/
 /* NAND status bit mask */
 /*----------------------*/
-#define STATUS_BIT_0 				0x01
-#define STATUS_BIT_1 				0x02
-#define STATUS_BIT_5 				0x20
-#define STATUS_BIT_6 				0x40
+#define STATUS_BIT_0 						0x01
+#define STATUS_BIT_1 						0x02
+#define STATUS_BIT_5 						0x20
+#define STATUS_BIT_6 						0x40
 
 /*----------------------*/
 /* NAND status response */
 /*----------------------*/
-#define NAND_IO_RC_PASS 			0
-#define NAND_IO_RC_FAIL 			1
-#define NAND_IO_RC_TIMEOUT 			2
-#define NAND_MEMORY_END             3
+#define NAND_IO_RC_PASS 					0
+#define NAND_IO_RC_FAIL 					1
+#define NAND_IO_RC_TIMEOUT 					2
+#define NAND_MEMORY_END             		3
 
 /*------------------*/
 /* NAND command set */
@@ -90,32 +90,28 @@ void Flash_MT298G08AAAWP_Nand_Write_8Bytes(void *a_pBuf, unsigned short a_usLen)
 #define NAND_CMD_PAGE_READ_CYCLE1 			0x00
 #define	NAND_CMD_PAGE_READ_CYCLE2 			0x30
 #define NAND_CMD_READ_DATA_MOVE 			0x35
-#define NAND_CMD_RESET 					0xFF
-#define	NAND_CMD_PAGE_PROGRAM_CYCLE1 		        0x80
-#define NAND_CMD_PAGE_PROGRAM_CYCLE2 		        0x10
-#define NAND_CMD_CACHE_PRGM_CONFIRM 		        0x15
+#define NAND_CMD_RESET 						0xFF
+#define	NAND_CMD_PAGE_PROGRAM_CYCLE1 		0x80
+#define NAND_CMD_PAGE_PROGRAM_CYCLE2 		0x10
+#define NAND_CMD_CACHE_PRGM_CONFIRM 		0x15
 #define NAND_CMD_PRGM_DATA_MOVE				0x85
-#define NAND_CMD_BLOCK_ERASE_CYCLE1 		        0x60
-#define NAND_CMD_BLOCK_ERASE_CYCLE2 		        0xD0
+#define NAND_CMD_BLOCK_ERASE_CYCLE1 		0x60
+#define NAND_CMD_BLOCK_ERASE_CYCLE2 		0xD0
 #define NAND_CMD_RANDOM_DATA_INPUT 			0x85
-#define NAND_CMD_RANDOM_DATA_READ_CYCLE1	        0x05
-#define NAND_CMD_RANDOM_DATA_READ_CYCLE2	        0xE0
+#define NAND_CMD_RANDOM_DATA_READ_CYCLE1	0x05
+#define NAND_CMD_RANDOM_DATA_READ_CYCLE2	0xE0
 #define NAND_CMD_READ_STATUS 				0x70
 #define NAND_CMD_READ_CACHE_START 			0x31
 #define NAND_CMD_READ_CACHE_LAST 			0X3F
 #define NAND_CMD_READ_UNIQUE_ID 			0x65
-
-#define NAND_CMD_DS 					0xB8
-
-#define	NAND_CMD_READ_ID 				0x90
+#define NAND_CMD_DS 						0xB8
+#define	NAND_CMD_READ_ID 					0x90
 #define NAND_CMD_READ_UNIQUE_ID 			0x65
-
 #define	NAND_CMD_PROGRAM_OTP 				0xA0
 #define	NAND_CMD_PROTECT_OTP 				0xA5
-#define	NAND_CMD_READ_OTP 				0xAF
-
-#define	NAND_CMD_BLOCK_UNLOCK_CYCLE1 		        0x23
-#define	NAND_CMD_BLOCK_UNLOCK_CYCLE2 		        0x24
+#define	NAND_CMD_READ_OTP 					0xAF
+#define	NAND_CMD_BLOCK_UNLOCK_CYCLE1 		0x23
+#define	NAND_CMD_BLOCK_UNLOCK_CYCLE2 		0x24
 #define	NAND_CMD_BLOCK_LOCK 				0x2A
 #define	NAND_CMD_BLOCK_LOCK_TIGHT 			0x2C
 #define	NAND_CMD_BLOCK_LOCK_STATUS 			0x7A
@@ -132,17 +128,18 @@ struct FlashAddress{
 	unsigned short usColNum;
 };
 
-void clear_write_address();
-void clear_read_address();
-void copy_write_address (struct FlashAddress* address_dst);
-bool compare_address();
-
 uint8_t flash_init();
-short flash_reset();
+void flash_reset();
 
-void send_data_to_flash(unsigned char *data_frame);
-short Flash_ProgramPageLast(void);
-short read_data_from_flash(unsigned char *data_frame);
+short flash_program_page(struct FlashAddress structNandAddress, unsigned short a_usReadSizeByte, unsigned char *a_pucReadBuf);
+short flash_program_page_start(struct FlashAddress structNandAddress, unsigned short a_usReadSizeByte, unsigned char *a_pucReadBuf);
+short flash_program_page_next(unsigned short usColNum, unsigned short a_usReadSizeByte, unsigned char *a_pucReadBuf);
+short flash_program_page_last(void);
+
+short flash_read_page(struct FlashAddress structNandAddress, unsigned short a_usReadSizeByte, unsigned char *a_pucReadBuf);
+short flash_read_page_start(struct FlashAddress structNandAddress, unsigned short a_usReadSizeByte, unsigned char *a_pucReadBuf);
+short flash_read_page_next(unsigned short a_usColNum, unsigned short a_usReadSizeByte, unsigned char *a_pucReadBuf);
+
 void erase_flash();
 
 #endif
