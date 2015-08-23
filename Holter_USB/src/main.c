@@ -66,9 +66,8 @@ void main ()
 			app_get_flags()->backup_stop = false;
 			app_get_flags()->backup_enable = false;
 
-			flash_program_page_last();
-
 			if(app_get_flags()->device_run == true){
+				flash_program_page_last();
 				set_exam_stop_time();
 				GPIO_setOutputLowOnPin(GPIO_PORT_P5,GPIO_PIN1);
 			}

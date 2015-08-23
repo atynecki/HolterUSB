@@ -1,35 +1,5 @@
-/***********************************************************************************************************
- *  MT298G08AAAWP: 8GBits Nand Flash is used to store the ECG data.
- * This file contains three mdules which are as below
- * Flash_MT298G08AAAWP_init()
- * 			: which initialzes the MT298G08AAAWP interface and GPIO regs.
- * Flash_MT298G08AAAWP_Page_Read()
- * 			: which reads the MT298G08AAAWP page of size 2048 bytes.
- * Flash_MT298G08AAAWP_Page_Write()
- * 			: which writes the MT298G08AAAWP page of size 2048 bytes.
- * 
- * 	The MT298G08AAAWP is interfaced with MSP430 as below,
- * 
- * 	____________]-------------------[________________
- * 			P7.0]------------------>[!CE]
- * 			P7.1]------------------>[CLE]
- * 			P7.2]------------------>[ALE]
- * 			P7.3]------------------>[!WE]
- * 			P7.4]------------------>[!RE]
- * 			P7.5]------------------>[!CE2]
- * 			P1.2]------------------>[!RB]
- * 			P1.4]------------------>[!RB2]
- * 		    	]-------------------[
- * 	       Port6]<Port6<-->I/O bus >[ D0-D7]
- *[ ____________]-------------------[_______________]
- * 				
- * 			
- *******************************************************************************************************/
 
 #include "Flash_driver.h"
-//unsigned char ucPageReadBuf[2112];
-//unsigned char ucPageProgBuf[2112];
-//unsigned char FlashData2[64];
 
 /***********************************************************************************************************
  * 	Function Name	: Flash_MT298G08AAAWP_init()

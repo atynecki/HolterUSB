@@ -74,6 +74,7 @@ void conversion_stop ()
 	disable_ADS1x9x_Conversion();
 
 	if(app_get_flags()->backup_enable == true){
+		flash_program_page_last();
 		set_exam_stop_time();
 		GPIO_setOutputLowOnPin(GPIO_PORT_P5,GPIO_PIN1);
 	}

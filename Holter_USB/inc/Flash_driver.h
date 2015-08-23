@@ -3,6 +3,27 @@
 
 #include "app_config.h"
 
+/**
+ *  MT298G08AAAWP: 8GBits Nand Flash is used to store the ECG data.
+ *
+ * 	The MT298G08AAAWP is interfaced with MSP430 as below,
+ *
+ * 	____________]-------------------[________________
+ * 			P7.0]------------------>[!CE]
+ * 			P7.1]------------------>[CLE]
+ * 			P7.2]------------------>[ALE]
+ * 			P7.3]------------------>[!WE]
+ * 			P7.4]------------------>[!RE]
+ * 			P7.5]------------------>[!CE2]
+ * 			P1.2]------------------>[!RB]
+ * 			P1.4]------------------>[!RB2]
+ * 		    	]-------------------[
+ * 	       Port6]<Port6<-->I/O bus >[ D0-D7]
+ *[ ____________]-------------------[_______________]
+ *
+ *
+*/
+
 #define NAND_FALSH_DATA_DIR P6DIR
 /*****************************************************************************************************************
  *  Control signals to port 7
@@ -115,9 +136,20 @@ void Flash_MT298G08AAAWP_Nand_Write_8Bytes(void *a_pBuf, unsigned short a_usLen)
 #define	NAND_CMD_BLOCK_LOCK 				0x2A
 #define	NAND_CMD_BLOCK_LOCK_TIGHT 			0x2C
 #define	NAND_CMD_BLOCK_LOCK_STATUS 			0x7A
-
-#define MAX_READ_STATUS_COUNT 				100000
     
+/*
+ *
+ * -------------------------------------------------------------
+ * |Cycle   |I/O7 | I/O6 | I/O5 | I/O4 |I/O3 |I/O2 |I/O1 |I/O0 |
+ * |--------|-----|------|------|------|-----|-----|-----|-----|
+ * | First  | CA7 | CA6  | CA5  | CA4  | CA3 | CA2 | CA1 | CA0 | // CA[0-11] - cols[0-2111]
+ * | Second | LOW | LOW  | LOW  | LOW  | CA11| CA10| CA9 | CA8 |
+ * | Third  | BA7 | BA6  | PA5  | PA4  | PA3 | PA2 | PA1 | PA0 | //PA[0-5] - Page Number's 0-63
+ * | Fourth | BA15| BA14 | BA13 | BA12 | BA11| BA10| BA9 | BA8 |
+ * | Fifth  | LOW | LOW  | LOW  | LOW  | LOW | LOW | LOW | BA16| // BA - Number of Blocks
+ * |-----------------------------------------------------------|
+*/
+
 #define PAGE_SIZE				        	2112
 #define PAGES_PER_BLOCK			            64
 #define MAX_BLOCKS				        	4096
