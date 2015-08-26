@@ -1,4 +1,7 @@
-/* Interrupt handlers source file */
+/**
+ * @file
+ * @brief interrupt handler methods
+ */
 
 #include "app_service.h"
 
@@ -21,6 +24,7 @@ __interrupt void Port_1(void)
     	  if(run_key_state == 0){
     		  if(switch_counter >=1000){
     			  if (app_get_flags()->device_run == false){
+    				  __bic_SR_register_on_exit(LPM3_bits);
     				  conversion_start();
 				  }
 
@@ -36,7 +40,7 @@ __interrupt void Port_1(void)
    else if (GPIO_getInterruptStatus(GPIO_PORT_P1,GPIO_PIN1)) {
      GPIO_clearInterruptFlag(GPIO_PORT_P1, GPIO_PIN1);
 
-     dummy_read = UCB0RXBUF; 		// Dummy Read
+     dummy_read = UCB0RXBUF;
      UCB0TXBUF = 0;
      
      UCB0IE |= UCRXIE;  // Enable USCI_B0 RX interrupt
@@ -46,12 +50,11 @@ __interrupt void Port_1(void)
 #pragma vector=USCI_B0_VECTOR
 __interrupt void USCI_B0_ISR(void)
 {
-	  if (__even_in_range(UCB0IV, 4) == 2) {   //Vector 2 - RXIFG
-			  //USCI_A0 TX buffer ready?
-		while (!USCI_B_SPI_getInterruptStatus(USCI_B0_BASE,
-											  USCI_B_SPI_TRANSMIT_INTERRUPT)) ;
-		spi_rx_buf[spi_rx_count++] =UCB0RXBUF;
-		UCB0TXBUF = 0;
+	if (__even_in_range(UCB0IV, 4) == 2) {
+	while (!USCI_B_SPI_getInterruptStatus(USCI_B0_BASE,
+										  USCI_B_SPI_TRANSMIT_INTERRUPT)) ;
+	spi_rx_buf[spi_rx_count++] =UCB0RXBUF;
+	UCB0TXBUF = 0;
 
 		if (spi_rx_count == 9) {
 			spi_rx_count = 0;
@@ -61,10 +64,9 @@ __interrupt void USCI_B0_ISR(void)
 
 			UCB0IE &= ~UCRXIE;               // Disable USCI_B0 RX interrupt
 		}
-	  }
+	}
 }
 
-volatile Calendar actualTime;
 #pragma vector=RTC_VECTOR
 __interrupt void RTC_A_ISR(void)
 {
@@ -88,30 +90,24 @@ __interrupt void RTC_A_ISR(void)
 #pragma vector = UNMI_VECTOR
 __interrupt void UNMI_ISR (void)
 {
-        switch (__even_in_range(SYSUNIV, SYSUNIV_BUSIFG )) {
-        case SYSUNIV_NONE:
-                __no_operation();
-                break;
-        case SYSUNIV_NMIIFG:
-                __no_operation();
-                break;
-        case SYSUNIV_OFIFG:
-#ifndef DRIVERLIB_LEGACY_MODE
-                UCS_clearFaultFlag(UCS_XT2OFFG);
-                UCS_clearFaultFlag(UCS_DCOFFG);
-                SFR_clearInterrupt(SFR_OSCILLATOR_FAULT_INTERRUPT);
-#else
-                UCS_clearFaultFlag(UCS_BASE, UCS_XT2OFFG);
-                UCS_clearFaultFlag(UCS_BASE, UCS_DCOFFG);
-                SFR_clearInterrupt(SFR_BASE, SFR_OSCILLATOR_FAULT_INTERRUPT);
+	switch (__even_in_range(SYSUNIV, SYSUNIV_BUSIFG )) {
+	case SYSUNIV_NONE:
+		__no_operation();
+		break;
+	case SYSUNIV_NMIIFG:
+		__no_operation();
+		break;
+	case SYSUNIV_OFIFG:
+		UCS_clearFaultFlag(UCS_XT2OFFG);
+		UCS_clearFaultFlag(UCS_DCOFFG);
+		SFR_clearInterrupt(SFR_OSCILLATOR_FAULT_INTERRUPT);
 
-#endif
-                break;
-        case SYSUNIV_ACCVIFG:
-                __no_operation();
-                break;
-        case SYSUNIV_BUSIFG:
-                SYSBERRIV = 0;  // Clear bus error flag
-                USB_disable();  // Disable
-        }
+		break;
+	case SYSUNIV_ACCVIFG:
+		__no_operation();
+		break;
+	case SYSUNIV_BUSIFG:
+		SYSBERRIV = 0;  // Clear bus error flag
+		USB_disable();  // Disable
+	}
 }

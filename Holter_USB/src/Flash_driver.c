@@ -1,3 +1,7 @@
+/**
+ * @file
+ * @brief NAND flash memory driver source
+ */
 
 #include "Flash_driver.h"
 
@@ -23,14 +27,13 @@ void Flash_MT298G08AAAWP_init(void)
 	P7OUT |= (enum PORT7_FALSH_CONTROL)FLASH_WE;	// Disable Write Enable
 // 	Clear_ALE();
  	P7OUT &= ~(enum PORT7_FALSH_CONTROL)FLASH_ALE;	// Disable Address Latch Enable
-
-} /* Flash_MT298G08AAAWP_init */
+}
 
 /***********************************************************************************************************
  * 	Function Name	: 	Flash_MT298G08AAAWP_Nand_Write_Cmd()
  * 	Purpose			:  Low level driver code to write a command to NAND flash.
  ***********************************************************************************************************/
-void Flash_MT298G08AAAWP_Nand_Write_Cmd( unsigned long a_ulOffset, unsigned char a_ucCmd)
+void Flash_MT298G08AAAWP_Nand_Write_Cmd(unsigned char a_ucCmd)
 {
 
 //Set_IO_DIR_Out();									// Set DIR as output
@@ -50,15 +53,13 @@ void Flash_MT298G08AAAWP_Nand_Write_Cmd( unsigned long a_ulOffset, unsigned char
 	
 // 	Clear_CLE();
 	P7OUT &= ~(enum PORT7_FALSH_CONTROL)FLASH_CLE; // Disable Command Latch
-
-}/* Flash_MT298G08AAAWP_Nand_Write_Cmd */
+}
 
 /***********************************************************************************************************
  * 	Function Name	: 	Flash_MT298G08AAAWP_Nand_Write_Addr()
  * 	Purpose			: This function Initializaes flash and memory pointer.
  ***********************************************************************************************************/
-
-void Flash_MT298G08AAAWP_Nand_Write_Addr( unsigned long a_ulOffset, unsigned char a_ucAddr)
+void Flash_MT298G08AAAWP_Nand_Write_Addr(unsigned char a_ucAddr)
 {
 	/* Add low level driver code to write an address to NAND flash. */
 	//Set_IO_DIR_Out();								// Set DIR as output
@@ -72,15 +73,13 @@ void Flash_MT298G08AAAWP_Nand_Write_Addr( unsigned long a_ulOffset, unsigned cha
 	P7OUT |= (enum PORT7_FALSH_CONTROL)FLASH_WE;
 // 	Clear_ALE();
 	P7OUT &= ~(enum PORT7_FALSH_CONTROL)FLASH_ALE;
-
-}/* Flash_MT298G08AAAWP_Nand_Write_Addr */
+}
 
 /***********************************************************************************************************
  * 	Function Name	: 	Flash_MT298G08AAAWP_Nand_Write()
  * 	Purpose			: This function Initializaes flash and memory pointer.
  ***********************************************************************************************************/
-
-void Flash_MT298G08AAAWP_Nand_Write( unsigned long a_ulOffset, void *a_pBuf, unsigned short a_usLen)
+void Flash_MT298G08AAAWP_Nand_Write(void *a_pBuf, unsigned short a_usLen)
 {
 	volatile int uiLenth;
 	volatile unsigned char *ucBuf_address = (unsigned char *)a_pBuf;
@@ -97,14 +96,13 @@ void Flash_MT298G08AAAWP_Nand_Write( unsigned long a_ulOffset, void *a_pBuf, uns
 // 		Set_WE();
 		P7OUT |= (enum PORT7_FALSH_CONTROL)FLASH_WE;
 	}
-}/* Flash_MT298G08AAAWP_Nand_Write */
+}
 
 /***********************************************************************************************************
  * 	Function Name	: 	Flash_MT298G08AAAWP_Nand_Write()
  * 	Purpose			: This function Initializaes flash and memory pointer.
  ***********************************************************************************************************/
-
-void Flash_MT298G08AAAWP_Nand_Write_8Bytes(  void *a_pBuf, unsigned short a_usLen)
+void Flash_MT298G08AAAWP_Nand_Write_8Bytes(void *a_pBuf, unsigned short a_usLen)
 {
 	volatile unsigned short uiLenth,length;
 	volatile unsigned char *ucBuf_address = (unsigned char *)a_pBuf;
@@ -162,15 +160,14 @@ void Flash_MT298G08AAAWP_Nand_Write_8Bytes(  void *a_pBuf, unsigned short a_usLe
 	 	P6OUT = *ucBuf_address++;						// Write data to data bus.
 // 		Set_WE();
 		P7OUT |= (enum PORT7_FALSH_CONTROL)FLASH_WE;
-
 	}
-}/* Flash_MT298G08AAAWP_Nand_Write */
+}
 
 /***********************************************************************************************************
  * 	Function Name	: 	Flash_MT298G08AAAWP_Nand_Write_byte()
  * 	Purpose			: This function Initializaes flash and memory pointer.
  ***********************************************************************************************************/
-void Flash_MT298G08AAAWP_Nand_Write_byte( unsigned char a_pucBuf, unsigned short a_usLen)
+void Flash_MT298G08AAAWP_Nand_Write_byte(unsigned char a_pucBuf, unsigned short a_usLen)
 {
 	/* Add low level driver code to write data to NAND flash. */
 	//Set_IO_DIR_Out();								// Set DIR as output
@@ -181,14 +178,13 @@ void Flash_MT298G08AAAWP_Nand_Write_byte( unsigned char a_pucBuf, unsigned short
  	P6OUT = a_pucBuf;
 // 	Set_WE();
 	P7OUT |= (enum PORT7_FALSH_CONTROL)FLASH_WE;
-
-}/* Flash_MT298G08AAAWP_Nand_Write_byte */
+}
 
 /***********************************************************************************************************
  * 	Function Name	: 	Flash_MT298G08AAAWP_Nand_Read()
  * 	Purpose			: This function Initializaes flash and memory pointer.
  ***********************************************************************************************************/
-void Flash_MT298G08AAAWP_Nand_Read( unsigned long a_ulOffset, void *a_pBuf, unsigned short a_usLen)
+void Flash_MT298G08AAAWP_Nand_Read(void *a_pBuf, unsigned short a_usLen)
 {
 
 	/* Add low level driver code to read data from NAND flash. */
@@ -204,15 +200,14 @@ void Flash_MT298G08AAAWP_Nand_Read( unsigned long a_ulOffset, void *a_pBuf, unsi
 	 	*ucBuf_address++ = P6IN;
 	 	//	 	Set_RE();
 		P7OUT |= (enum PORT7_FALSH_CONTROL)FLASH_RE;
-		
 	}
-}/* Flash_MT298G08AAAWP_Nand_Read */
+}
 
 /***********************************************************************************************************
  * 	Function Name	: 	Flash_MT298G08AAAWP_init()
  * 	Purpose			: This function Initializaes flash and memory pointer.
  ***********************************************************************************************************/
-void Flash_MT298G08AAAWP_Nand_Read_byte( unsigned long a_ulOffset, void *a_pBuf, unsigned short a_usLen)
+void Flash_MT298G08AAAWP_Nand_Read_byte(void *a_pBuf, unsigned short a_usLen)
 {
 	volatile unsigned char *ucBuf_address = (unsigned char *)a_pBuf;
 
@@ -230,8 +225,7 @@ void Flash_MT298G08AAAWP_Nand_Read_byte( unsigned long a_ulOffset, void *a_pBuf,
 	/* Set Read Enable Pin to High for NAND flash. */
 
 	P7OUT |= (enum PORT7_FALSH_CONTROL)FLASH_RE; 	// Disable Chip
-
-}/* Flash_MT298G08AAAWP_Nand_Read_byte */
+}
 
 
 /** APPLICATION FUNCTIONS */
@@ -313,9 +307,9 @@ short flash_program_page(struct FlashAddress structNandAddress, unsigned short a
 	ucnandAddressByte |= (unsigned char)((structNandAddress.usBlockNum  & 0x0003) << 6);
 
 	WRITE_NAND_ALE(ucnandAddressByte);		/* Set page address byte 0 */
-	ucnandAddressByte |= (unsigned char)(((structNandAddress.usBlockNum  >> 3) & 0x00FF));
+	ucnandAddressByte |= (unsigned char)(((structNandAddress.usBlockNum  >> 2) & 0x00FF));
 	WRITE_NAND_ALE(ucnandAddressByte);		/* Set page address byte 1 */
-	ucnandAddressByte |= (unsigned char)(((structNandAddress.usBlockNum  >> 11) & 0x0007));
+	ucnandAddressByte |= (unsigned char)(((structNandAddress.usBlockNum  >> 10) & 0x0007));
 	WRITE_NAND_ALE(ucnandAddressByte);		/* Set page address byte 2 */
 
 	/* Issue Command */
@@ -349,9 +343,9 @@ short flash_program_page_start(struct FlashAddress structNandAddress, unsigned s
 	ucnandAddressByte |= (unsigned char)((structNandAddress.usBlockNum  & 0x0003) << 6);
 
 	WRITE_NAND_ALE(ucnandAddressByte);		/* Set page address byte 0 */
-	ucnandAddressByte |= (unsigned char)(((structNandAddress.usBlockNum  >> 3) & 0x00FF));
+	ucnandAddressByte |= (unsigned char)(((structNandAddress.usBlockNum  >> 2) & 0x00FF));
 	WRITE_NAND_ALE(ucnandAddressByte);		/* Set page address byte 1 */
-	ucnandAddressByte |= (unsigned char)(((structNandAddress.usBlockNum  >> 11) & 0x0007));
+	ucnandAddressByte |= (unsigned char)(((structNandAddress.usBlockNum  >> 10) & 0x0007));
 	WRITE_NAND_ALE(ucnandAddressByte);		/* Set page address byte 2 */
 
 	Flash_MT298G08AAAWP_Nand_Write_8Bytes(a_pucReadBuf, a_usReadSizeByte);
@@ -416,9 +410,9 @@ short flash_read_page(struct FlashAddress structNandAddress, unsigned short a_us
 	ucnandAddressByte |= (unsigned char)((structNandAddress.usBlockNum  & 0x0003) << 6);
 
 	WRITE_NAND_ALE(ucnandAddressByte);		/* Set page address byte 0 */
-	ucnandAddressByte |= (unsigned char)(((structNandAddress.usBlockNum  >> 3) & 0x00FF));
+	ucnandAddressByte |= (unsigned char)(((structNandAddress.usBlockNum  >> 2) & 0x00FF));
 	WRITE_NAND_ALE(ucnandAddressByte);		/* Set page address byte 1 */
-	ucnandAddressByte |= (unsigned char)(((structNandAddress.usBlockNum  >> 11) & 0x0007));
+	ucnandAddressByte |= (unsigned char)(((structNandAddress.usBlockNum  >> 10) & 0x0007));
 	WRITE_NAND_ALE(ucnandAddressByte);		/* Set page address byte 2 */
 
 	/* Issue command */
@@ -455,14 +449,14 @@ short flash_read_page_start(struct FlashAddress structNandAddress, unsigned shor
 	WRITE_NAND_ALE(ucnandAddressByte);		/* Set column address byte 0 */
 	ucnandAddressByte = (structNandAddress.usColNum >> 8) & 0x0F;
 	WRITE_NAND_ALE(ucnandAddressByte);		/* Set column address byte 1 */
-	
+
 	ucnandAddressByte = (structNandAddress.ucPageNum ) & 0x3F;
 	ucnandAddressByte |= (unsigned char)((structNandAddress.usBlockNum  & 0x0003) << 6);
 
 	WRITE_NAND_ALE(ucnandAddressByte);		/* Set page address byte 0 */
-	ucnandAddressByte |= (unsigned char)(((structNandAddress.usBlockNum  >> 3) & 0x00FF));
+	ucnandAddressByte |= (unsigned char)(((structNandAddress.usBlockNum  >> 2) & 0x00FF));
 	WRITE_NAND_ALE(ucnandAddressByte);		/* Set page address byte 1 */
-	ucnandAddressByte |= (unsigned char)(((structNandAddress.usBlockNum  >> 11) & 0x0007));
+	ucnandAddressByte |= (unsigned char)(((structNandAddress.usBlockNum  >> 10) & 0x0007));
 	WRITE_NAND_ALE(ucnandAddressByte);		/* Set page address byte 2 */
 
 	/* Issue command */
@@ -477,6 +471,8 @@ short flash_read_page_start(struct FlashAddress structNandAddress, unsigned shor
 
 	READ_NAND_ARRAY(a_pucReadBuf, a_usReadSizeByte);
 
+	//	Set_CE(); 			// Disable Chip Select
+	P7OUT |= (enum PORT7_FALSH_CONTROL)FLASH_CE;
 	return rc;
 }
 
@@ -516,7 +512,7 @@ static short flash_erase_block(unsigned short usBlockNum)
 	
 	WRITE_NAND_ALE((unsigned char)ucnandAddressByte);	/* Set page address byte 0 */ 
 	
-	ucnandAddressByte = usBlockNum >> 0x2;
+	ucnandAddressByte = usBlockNum >> 2;
 	ucnandAddressByte = ucnandAddressByte & 0xff;
 	
 	WRITE_NAND_ALE((unsigned char)ucnandAddressByte);	/* Set page address byte 1 */

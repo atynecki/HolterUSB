@@ -5,8 +5,7 @@ void main ()
 {
 	WDT_A_hold(WDT_A_BASE);
 
-    // Minimum Vcore setting required for the USB API is PMM_CORE_LEVEL_3
-    PMM_setVCore(PMM_CORE_LEVEL_3);
+    PMM_setVCore(PMM_CORE_LEVEL_2);
 
     initClocks();
 
@@ -18,7 +17,7 @@ void main ()
 
     __enable_interrupt();
 
-    __bis_SR_register(LPM0_bits + GIE);
+    system_standby();
 
     while (1) {
     	if(app_get_flags()->packet_data_ready){
@@ -103,6 +102,10 @@ void main ()
 			clear_write_address();
 			clear_read_address();
 			GPIO_setOutputLowOnPin(GPIO_PORT_P5,GPIO_PIN1);
+    	}
+
+    	if(!(USB_connectionInfo() & kUSB_vbusPresent) && !app_get_flags()->device_run){
+    		system_standby();
     	}
     }
 }

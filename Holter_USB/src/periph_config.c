@@ -1,11 +1,13 @@
-/** Peripherals configuration source */
+
+/**
+ * @file
+ * @brief peripherals config source
+ */
 
 #include "periph_config.h"
 #include "app_service.h"
 
-uint8_t flash_test[PACKET_FRAME_LENGTH] = {0};
-
-void initClocks()
+void initClocks ()
 {
 	UCS_clockSignalInit(
 			UCS_FLLREF,
@@ -24,15 +26,22 @@ void initClocks()
 
 static void GPIO_init ()
 {
+	GPIO_setAsOutputPin(GPIO_PORT_P2, GPIO_ALL);
+	GPIO_setOutputLowOnPin(GPIO_PORT_P2, GPIO_ALL);
+
+	GPIO_setAsOutputPin(GPIO_PORT_P5, GPIO_ALL);
+	GPIO_setOutputLowOnPin(GPIO_PORT_P5, GPIO_ALL);
+
+	GPIO_setAsOutputPin(GPIO_PORT_P6, GPIO_ALL);
+	GPIO_setOutputLowOnPin(GPIO_PORT_P6, GPIO_ALL);
+
+	GPIO_setAsOutputPin(GPIO_PORT_P7, GPIO_ALL);
+	GPIO_setOutputLowOnPin(GPIO_PORT_P7, GPIO_ALL);
+
 	GPIO_setAsOutputPin(GPIO_PORT_P5,GPIO_PIN0);
 	GPIO_setAsOutputPin(GPIO_PORT_P5,GPIO_PIN1);
 	GPIO_setOutputLowOnPin(GPIO_PORT_P5,GPIO_PIN0);
 	GPIO_setOutputLowOnPin(GPIO_PORT_P5,GPIO_PIN1);
-        
-	//freq check pin
-	GPIO_setAsOutputPin(GPIO_PORT_P7,GPIO_PIN6);
-	GPIO_setOutputHighOnPin(GPIO_PORT_P7,GPIO_PIN6);
-	//GPIO_toggleOutputOnPin(GPIO_PORT_P7,GPIO_PIN6); //check freq
 
 	GPIO_setAsInputPinWithPullUpResistor(GPIO_PORT_P1,GPIO_PIN7);
     GPIO_interruptEdgeSelect(GPIO_PORT_P1,GPIO_PIN7,GPIO_HIGH_TO_LOW_TRANSITION);
@@ -59,29 +68,34 @@ static void RTC_init ()
     RTC_A_startClock(RTC_A_BASE);
 }
 
-void set_calender_time()
+void set_calender_time ()
 {
 	RTC_A_holdClock(RTC_A_BASE);
 	RTC_init();
 }
 
+uint8_t flash_test[PACKET_FRAME_LENGTH] = {0};
 void peripherial_init () 
 {
 	volatile uint8_t error_check;
+	struct FlashAddress tmp_addres;
+	tmp_addres.usColNum = 0;
+	tmp_addres.ucPageNum = 0;
+	tmp_addres.usBlockNum = 0;
 
 	GPIO_init();
 
 	calender_init();
     RTC_init();
 
-    error_check = ADS1x9x_Init();
+    error_check = ADS1292_Init();
     if(error_check == 1)
     	app_get_flags()->device_error |= 1 << ADS_ERR;
 
     error_check = flash_init();
     if(error_check != 0)
         	app_get_flags()->device_error |= 1 << FLASH_ERR;
-    read_data_from_flash(flash_test);
+    flash_read_page(tmp_addres, 64, flash_test);
 
     error_check = USB_setup(TRUE,TRUE);
 	if(error_check != 0)

@@ -1,84 +1,36 @@
-#ifndef ADS1x9x_H_
-#define ADS1x9x_H_
+#ifndef ADS1292_DRIVER_H_
+#define ADS1292_DRIVER_H_
+
+/**
+ * @file
+ * @brief ADS1292R driver header
+ */
 
 #include "app_config.h"
-/****************************************************************/
-/* Global functions*/
-/****************************************************************/
 
- /** HARDWARE CONTROL */
-void ADS1x9x_Clock_Select(unsigned char clock_in);
-void ADS1x9x_Reset(void);
-void ADS1x9x_Enable_Start(void);
-void ADS1x9x_Disable_Start(void);
-void Hard_Stop_ADS1x9x (void);
-void Set_ADS1x9x_Chip_Enable (void);
-void Clear_ADS1x9x_Chip_Enable (void);
+/** COMMANDS */
 
-/** PERIPHERIAL INIT */
-void Init_ADS1x9x_DRDY_Interrupt(void);
-void Enable_ADS1x9x_DRDY_Interrupt (void);
-void Disable_ADS1x9x_DRDY_Interrupt (void);
-void Set_GPIO(void);
-void Set_UCB0_SPI(void);
-
-/** SPI COMMUNICATION WITH DEVICE */
-void ADS1x9x_SPI_Command_Data(unsigned char Data);
-void ADS1x9x_Reg_Write(unsigned char Reg_address, unsigned char Reg_data);
-unsigned char ADS1x9x_Reg_Read(unsigned char Reg_address);
-
-/** SOFTWARE CONTROL */
-void Wake_Up_ADS1x9x (void);
-void Put_ADS1x9x_In_Sleep (void);
-void Soft_Reset_ADS1x9x (void);
-void Soft_Start_ADS1x9x(void);
-void Soft_Stop_ADS1x9x(void);
-void Start_Read_Data_Continuous(void);
-void Stop_Read_Data_Continuous(void);
-void Read_Data (void);
-
-/** API FUNCTIONS */
-void ADS1x9x_Reg_Init(unsigned char* reg_tab);
-void ADS1x9x_Read_All_Regs(unsigned char ADS1x9xeg_buf[]);
-uint8_t ADS1x9x_Init(void);
-void enable_ADS1x9x_Conversion (void);
-void disable_ADS1x9x_Conversion (void);
-
-/****************************************************************/
-/* ADS1x9x COMMAND DESCRIPTION and definations */
-/****************************************************************/
- // System Commands
+/* System commands */
  #define WAKEUP		0x02		//Wake-up from standby mode
  #define STANDBY	0x04		//Enter standby mode
  #define RESET		0x06		//Reset the device
  #define START		0x08		//Start/restart (synchronize) conversions
  #define STOP		0x0A		//Stop conversion
  
-// Data Read Commands
- #define RDATAC		0x10		//Enable Read Data Continuous mode.
- 					//This mode is the default mode at power-up.
+/* Data Read Commands */
+ #define RDATAC		0x10		//Enable Read Data Continuous mode. This mode is the default mode at power-up.
  #define SDATAC		0x11		//Stop Read Data Continuously mode
  #define RDATA		0x12		//Read data by command; supports multiple read back.
  
- // Register Read Commands
- #define RREG		0x20		//Read n nnnn registers starting at address r rrrr
- 					//first byte 001r rrrr (2xh)(2) - second byte 000n nnnn(2)
- #define WREG		0x40		//Write n nnnn registers starting at address r rrrr
-                                        //first byte 010r rrrr (2xh)(2) - second byte 000n nnnn(2)
- #define DELAY_COUNT 2 
+ /* Register Read Commands */
+ #define RREG		0x20		//Read n nnnn registers starting at address r rrrr; first byte 001r rrrr (2xh)(2) - second byte 000n nnnn(2)
+ #define WREG		0x40		//Write n nnnn registers starting at address r rrrr; first byte 010r rrrr (2xh)(2) - second byte 000n nnnn(2)
 
-/****************************************************************/
-/* ADS1x9x register value                                       */
-/****************************************************************/
-#define ADS1x9x_REG_ID_VALUE    0x73
+#define DELAY_COUNT 2
 
-
-/****************************************************************/
-/* ADS1x9x register addresses                                  */
-/****************************************************************/
-
+/** Register addresses */
 #define ADS1x9x_REG_DEVID         (0x0000u)
-/* 
+/**
  * ID: ID Control Register (Factory-Programmed, Read-Only)
  * Address = 00h
  * ----------------------------------------------------------------------
@@ -109,7 +61,7 @@ void disable_ADS1x9x_Conversion (void);
 */
 
 #define ADS1x9x_REG_CONFIG1       (0x0001u)
-/*
+/**
  * 
  * CONFIG1: Configuration Register 1
  * Address = 01h
@@ -142,7 +94,6 @@ void disable_ADS1x9x_Conversion (void);
  * --------------------------------------------------------------
  */
 #define ADS1x9x_REG_CONFIG2       (0x0002u)
-
 /*
  * CONFIG2: Configuration Register 2
  * Address = 02h
@@ -189,8 +140,7 @@ void disable_ADS1x9x_Conversion (void);
  */
 
 #define ADS1x9x_REG_LOFF       (0x0003u)
-
-/*
+/**
  * LOFF: Lead-Off Control Register
  * Address = 03h
  *-----------------------------------------------------------------------------------------------
@@ -241,7 +191,8 @@ void disable_ADS1x9x_Conversion (void);
  */
  
 #define ADS1x9x_REG_CH1SET        (0x0004u)
-/*	CHnSET: Individual Channel Settings
+/**
+ * 	CHnSET: Individual Channel Settings
  * 	Address = 04h
  *--------------------------------------------------------------------------------
  * | BIT 7    |BIT 6    |BIT 5   |  BIT 4  | BIT 3  | BIT 2  |  BIT 1  | BIT 0 	 |
@@ -282,7 +233,8 @@ void disable_ADS1x9x_Conversion (void);
  */
 
 #define ADS1x9x_REG_CH2SET        (0x0005u)
-/*	CHnSET: Individual Channel Settings
+/**
+ * 	CHnSET: Individual Channel Settings
  * 	Address = 05h
  *--------------------------------------------------------------------------------
  * | BIT 7    |BIT 6    |BIT 5   |  BIT 4  | BIT 3  | BIT 2  |  BIT 1  | BIT 0 	 |
@@ -323,7 +275,7 @@ void disable_ADS1x9x_Conversion (void);
  */
 
 #define ADS1x9x_REG_RLD_SENS      (0x0006u)
-/*
+/**
  * RLD_SENSP
  * Address = 06h
  *---------------------------------------------------------------------------------------
@@ -375,7 +327,7 @@ void disable_ADS1x9x_Conversion (void);
  */
  
 #define ADS1x9x_REG_LOFF_SENS     (0x0007u)
-/*
+/**
  * LOFF_SENS
  * Address = 07h
  *--------------------------------------------------------------------------------
@@ -422,7 +374,7 @@ void disable_ADS1x9x_Conversion (void);
  */
  
 #define ADS1x9x_REG_LOFF_STAT      (0x0008u)
-/*
+/**
  * LOFF_STAT
  * Address = 08h
  *--------------------------------------------------------------------------------------------
@@ -472,8 +424,9 @@ void disable_ADS1x9x_Conversion (void);
  *		1 = Not connected
  *  
  */
+
 #define ADS1x9x_REG_RESP1     (0x009u)
-/*
+/**
  * RESP1: Respiration Control Register 1
  * Address = 09h
     *------------------------------------------------------------------------------------------
@@ -522,7 +475,7 @@ void disable_ADS1x9x_Conversion (void);
  */
 
 #define ADS1x9x_REG_RESP2      (0x00Au)
-/*
+/**
  * RESP2: Respiration Control Register 2
  * Address = 0Ah
  *--------------------------------------------------------------------------------------------
@@ -550,8 +503,9 @@ void disable_ADS1x9x_Conversion (void);
  *    
  *    Bit 0 Must be set to '1;
  */
+
 #define ADS1x9x_REG_GPIO     (0x00Cu)
-/*
+/**
  * GPIO: General-Purpose I/O Register
  * Address = 0Ch
  *-----------------------------------------------------------------------------------------
@@ -573,15 +527,9 @@ void disable_ADS1x9x_Conversion (void);
  *    programmed as inputs or as outputs. As outputs, a write to the GPIOD sets the output value. As inputs, a write to the
  *    GPIOD has no effect. GPIO is not available in certain respiration modes.
 */
- 
 
-enum ADS129x
-{
-		ADS1191_16BIT	 = 0,
-		ADS1192_16BIT,
-		ADS1291_24BIT,
-		ADS1292_24BIT
-};
+/** Register value */
+#define ADS1x9x_REG_ID_VALUE    0x73
 
 enum PORT2_ADC_CONTROL
 {
@@ -600,4 +548,39 @@ enum PORT8_ADC_CONTROL
 		ADC_CS	 	= 4
 };
 
-#endif /*ADS1x9x_H_*/
+
+/* Hardware control */
+void ADS1292_Clock_Select(uint8_t clock_in);
+void ADS1292_Reset(void);
+void ADS1292_Enable_Start(void);
+void ADS1292_Disable_Start(void);
+void Hard_Stop_ADS1292(void);
+void Set_ADS1292_Chip_Enable(void);
+void Clear_ADS1292_Chip_Enable(void);
+
+/* Peripherial and interrupt init */
+void Init_ADS1292_DRDY_Interrupt(void);
+void Enable_ADS1292_DRDY_Interrupt(void);
+void Disable_ADS1292_DRDY_Interrupt(void);
+
+/* SPI comunnication with device*/
+void ADS1292_SPI_Command_Data(uint8_t data);
+void ADS1292_Reg_Write(uint8_t address, uint8_t data);
+uint8_t ADS1292_Reg_Read(uint8_t address);
+
+/* Software control */
+void Wake_Up_ADS1292(void);
+void Put_ADS1292_In_Sleep(void);
+void Soft_Reset_ADS1292(void);
+void Soft_Start_ADS1292(void);
+void Soft_Stop_ADS1292(void);
+void Start_Read_Data_Continuous(void);
+void Stop_Read_Data_Continuous(void);
+void Read_Data(void);
+
+/* API functions */
+uint8_t ADS1292_Init(void);
+void ADS1292_enable_conversion(void);
+void ADS1292_disable_conversion(void);
+
+#endif

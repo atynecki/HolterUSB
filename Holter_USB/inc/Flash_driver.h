@@ -1,10 +1,15 @@
 #ifndef FLASH_DRIVER_H_
 #define FLASH_DRIVER_H_
 
+/**
+ * @file
+ * @brief NAND flash memory driver header
+ */
+
 #include "app_config.h"
 
 /**
- *  MT298G08AAAWP: 8GBits Nand Flash is used to store the ECG data.
+ *  MT298G08AAAWP: 8GBits Nand Flash is used to store the ECG data
  *
  * 	The MT298G08AAAWP is interfaced with MSP430 as below,
  *
@@ -25,7 +30,7 @@
 */
 
 #define NAND_FALSH_DATA_DIR P6DIR
-/*****************************************************************************************************************
+/**
  *  Control signals to port 7
  * P7.0 --Chip select 1 for first 512 MB data space
  * P7.1 --Clock
@@ -33,7 +38,7 @@
  * P7.3 --Write enable
  * P7.4 --Read Enable
  * P7.5 --Chip select 2 for Second 512 MB data space
- *****************************************************************************************************************/
+*/
 enum PORT7_FALSH_CONTROL
 {
 	FLASH_CE = 1,
@@ -43,71 +48,35 @@ enum PORT7_FALSH_CONTROL
 	FLASH_RE = 16,
 	FLASH_CE2 = 32
 };
-/*****************************************************************************************************************
- *  Control signals to port 1
+/**
+ * Control signals to port 1
  * 
  * P1.2 -- Bussy interrupt for first 512 MB
  * P1.4 -- Bussy interrupt for Second 512 MB
  * 
- *****************************************************************************************************************/
+*/
 enum PORT1_FALSH_CONTROL
 {
 	FLASH_RB = 4,
 	FLASH_RB2 = 16
 };
-/*****************************************************************************************************************/
 
-#define CLE_OFFSET 0xFFFFF		/*The offset value is for example purpose only */
-#define ALE_OFFSET 0xFFFFE      /*The offset value is for example purpose only */
-#define RW_OFFSET  0xFFFFD      /*The offset value is for example purpose only */
-
-#define WRITE_NAND_CLE(command)(Flash_MT298G08AAAWP_Nand_Write_Cmd(CLE_OFFSET, command))
-#define WRITE_NAND_ALE(address)(Flash_MT298G08AAAWP_Nand_Write_Addr(ALE_OFFSET, address))
-#define WRITE_NAND_BYTE(data) (Flash_MT298G08AAAWP_Nand_Write_byte(RW_OFFSET, 1))
-#define WRITE_NAND_ARRAY(data,n) (Flash_MT298G08AAAWP_Nand_Write(RW_OFFSET, data, n))
-#define READ_NAND_BYTE(data)(Flash_MT298G08AAAWP_Nand_Read_byte(RW_OFFSET, &(data), 1))
-#define READ_NAND_ARRAY(data,n) (Flash_MT298G08AAAWP_Nand_Read(RW_OFFSET, data, n))
-#define WRITE_NAND_ARRAY1(data,n) (Flash_MT298G08AAAWP_Nand_Write_8Bytes(RW_OFFSET, data, n))
-
-/***********************************************************************************************************
- *  General Functions.
- * *********************************************************************************************************/
-void Flash_MT298G08AAAWP_init(void);
-void Flash_MT298G08AAAWP_Nand_Write_Cmd( unsigned long a_ulOffset, unsigned char a_ucCmd);
-void Flash_MT298G08AAAWP_Nand_Write_Addr(unsigned long a_ulOffset, unsigned char a_ucAddr);
-void Flash_MT298G08AAAWP_Nand_Write( unsigned long a_ulOffset, void *a_pBuf, unsigned short a_usLen);
-void Flash_MT298G08AAAWP_Nand_Write_byte( unsigned char a_pucBuf, unsigned short a_usLen);
-void Flash_MT298G08AAAWP_Nand_Read( unsigned long a_ulOffset, void *a_pBuf, unsigned short a_usLen);
-void Flash_MT298G08AAAWP_Nand_Read_byte( unsigned long a_ulOffset, void *a_pBuf, unsigned short a_usLen);
-void Flash_MT298G08AAAWP_Nand_Write_8Bytes(void *a_pBuf, unsigned short a_usLen);
-
-/***********************************************************************************************************
- *  Aplication Functions.
- * *********************************************************************************************************/
-/*---------------------------------*/
 /* Maximum read status retry count */
-/*---------------------------------*/
-#define MAX_READ_STATUS_COUNT 			100000
+#define MAX_READ_STATUS_COUNT 				100000
 
-/*----------------------*/
-/* NAND status bit mask */
-/*----------------------*/
+/* Flash status bit mask */
 #define STATUS_BIT_0 						0x01
 #define STATUS_BIT_1 						0x02
 #define STATUS_BIT_5 						0x20
 #define STATUS_BIT_6 						0x40
 
-/*----------------------*/
-/* NAND status response */
-/*----------------------*/
+/* Flash status response */
 #define NAND_IO_RC_PASS 					0
 #define NAND_IO_RC_FAIL 					1
 #define NAND_IO_RC_TIMEOUT 					2
 #define NAND_MEMORY_END             		3
 
-/*------------------*/
-/* NAND command set */
-/*------------------*/
+/* Flash command */
 #define NAND_CMD_PAGE_READ_CYCLE1 			0x00
 #define	NAND_CMD_PAGE_READ_CYCLE2 			0x30
 #define NAND_CMD_READ_DATA_MOVE 			0x35
@@ -138,15 +107,14 @@ void Flash_MT298G08AAAWP_Nand_Write_8Bytes(void *a_pBuf, unsigned short a_usLen)
 #define	NAND_CMD_BLOCK_LOCK_STATUS 			0x7A
     
 /*
- *
  * -------------------------------------------------------------
  * |Cycle   |I/O7 | I/O6 | I/O5 | I/O4 |I/O3 |I/O2 |I/O1 |I/O0 |
  * |--------|-----|------|------|------|-----|-----|-----|-----|
- * | First  | CA7 | CA6  | CA5  | CA4  | CA3 | CA2 | CA1 | CA0 | // CA[0-11] - cols[0-2111]
- * | Second | LOW | LOW  | LOW  | LOW  | CA11| CA10| CA9 | CA8 |
- * | Third  | BA7 | BA6  | PA5  | PA4  | PA3 | PA2 | PA1 | PA0 | //PA[0-5] - Page Number's 0-63
+ * | First  | CA7 | CA6  | CA5  | CA4  | CA3 | CA2 | CA1 | CA0 |
+ * | Second | LOW | LOW  | LOW  | CA12 | CA11| CA10| CA9 | CA8 |
+ * | Third  | BA7 | BA6  | PA5  | PA4  | PA3 | PA2 | PA1 | PA0 |
  * | Fourth | BA15| BA14 | BA13 | BA12 | BA11| BA10| BA9 | BA8 |
- * | Fifth  | LOW | LOW  | LOW  | LOW  | LOW | LOW | LOW | BA16| // BA - Number of Blocks
+ * | Fifth  | LOW | LOW  | LOW  | LOW  | LOW | LOW | LOW | BA16|
  * |-----------------------------------------------------------|
 */
 
@@ -160,8 +128,27 @@ struct FlashAddress{
 	unsigned short usColNum;
 };
 
-uint8_t flash_init();
-void flash_reset();
+#define WRITE_NAND_CLE(command)(Flash_MT298G08AAAWP_Nand_Write_Cmd(command))
+#define WRITE_NAND_ALE(address)(Flash_MT298G08AAAWP_Nand_Write_Addr(address))
+#define WRITE_NAND_BYTE(data) (Flash_MT298G08AAAWP_Nand_Write_byte())
+#define WRITE_NAND_ARRAY(data,n) (Flash_MT298G08AAAWP_Nand_Write(data, n))
+#define READ_NAND_BYTE(data)(Flash_MT298G08AAAWP_Nand_Read_byte(&(data), 1))
+#define READ_NAND_ARRAY(data,n) (Flash_MT298G08AAAWP_Nand_Read(data, n))
+#define WRITE_NAND_ARRAY1(data,n) (Flash_MT298G08AAAWP_Nand_Write_8Bytes(data, n))
+
+/* General functions */
+void Flash_MT298G08AAAWP_init(void);
+void Flash_MT298G08AAAWP_Nand_Write_Cmd(unsigned char a_ucCmd);
+void Flash_MT298G08AAAWP_Nand_Write_Addr(unsigned char a_ucAddr);
+void Flash_MT298G08AAAWP_Nand_Write(void *a_pBuf, unsigned short a_usLen);
+void Flash_MT298G08AAAWP_Nand_Write_byte( unsigned char a_pucBuf, unsigned short a_usLen);
+void Flash_MT298G08AAAWP_Nand_Read( void *a_pBuf, unsigned short a_usLen);
+void Flash_MT298G08AAAWP_Nand_Read_byte(void *a_pBuf, unsigned short a_usLen);
+void Flash_MT298G08AAAWP_Nand_Write_8Bytes(void *a_pBuf, unsigned short a_usLen);
+
+/* Aplication functions */
+uint8_t flash_init(void);
+void flash_reset(void);
 
 short flash_program_page(struct FlashAddress structNandAddress, unsigned short a_usReadSizeByte, unsigned char *a_pucReadBuf);
 short flash_program_page_start(struct FlashAddress structNandAddress, unsigned short a_usReadSizeByte, unsigned char *a_pucReadBuf);
@@ -172,6 +159,6 @@ short flash_read_page(struct FlashAddress structNandAddress, unsigned short a_us
 short flash_read_page_start(struct FlashAddress structNandAddress, unsigned short a_usReadSizeByte, unsigned char *a_pucReadBuf);
 short flash_read_page_next(unsigned short a_usColNum, unsigned short a_usReadSizeByte, unsigned char *a_pucReadBuf);
 
-void erase_flash();
+void erase_flash(void);
 
 #endif

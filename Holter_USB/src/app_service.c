@@ -63,7 +63,7 @@ void conversion_start ()
 		GPIO_setOutputLowOnPin(GPIO_PORT_P5,GPIO_PIN0);
 	}
 
-	enable_ADS1x9x_Conversion ();
+	ADS1292_enable_conversion ();
 	packet_tail = 4;
 	send_state();
 }
@@ -71,7 +71,7 @@ void conversion_start ()
 void conversion_stop ()
 {
 	app_get_flags()->device_run = false;
-	disable_ADS1x9x_Conversion();
+	ADS1292_disable_conversion();
 
 	if(app_get_flags()->backup_enable == true){
 		flash_program_page_last();
@@ -87,21 +87,21 @@ void conversion_stop ()
 	send_state();
 }
 
-void clear_write_address()
+void clear_write_address ()
 {
     Write_Flash_Address.ucPageNum = 0;
     Write_Flash_Address.usBlockNum = 0;
     Write_Flash_Address.usColNum = 0;
 }
 
-void clear_read_address()
+void clear_read_address ()
 {
     Read_Flash_Address.ucPageNum = 0;
     Read_Flash_Address.usBlockNum = 0;
     Read_Flash_Address.usColNum = 0;
 }
 
-bool compare_address()
+bool compare_address ()
 {
   if(Read_Flash_Address.usBlockNum < Write_Flash_Address.usBlockNum)
     return true;
@@ -121,7 +121,7 @@ bool compare_address()
     return false;
 }
 
-void send_data_to_flash(unsigned char *data_frame)
+void send_data_to_flash(uint8_t *data_frame)
 {
 	if (Write_Flash_Address.usColNum == 0) {
 		flash_program_page_start(Write_Flash_Address,64,data_frame);
@@ -150,7 +150,7 @@ void send_data_to_flash(unsigned char *data_frame)
       }
 }
 
-short read_data_from_flash(unsigned char *data_frame)
+uint8_t read_data_from_flash(uint8_t *data_frame)
 {
 	if(Read_Flash_Address.usColNum == 0){
 		flash_read_page_start(Read_Flash_Address,64,data_frame);
@@ -187,7 +187,7 @@ void put_data_to_packet(uint8_t *data)
 	}
 }
 
-static void clean_header_frame()
+static void clean_header_frame ()
 {
 	int i;
 	for(i=3; i<PACKET_FRAME_LENGTH; i++)
@@ -370,7 +370,8 @@ void parse_command (uint8_t* data_buff)
 	}
 }
 
-void power_manage ()
+void system_standby()
 {
-	__bis_SR_register(LPM4_bits + GIE);
+	__bis_SR_register(LPM3_bits + GIE);
+	__no_operation();
 }
